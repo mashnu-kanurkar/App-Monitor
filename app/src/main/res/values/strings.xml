@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">App Monitor</string>
+    <string name="running_service"> Service is running</string>
+    <string name="stopped_service"> Service is stopped</string>
+    <string name="info">Select the apps for which you want to monitor the usage time</string>
+    <string name="notification_protecting_title">Monitoring your app usage</string>
+    <string name="notification_protecting_description">Set timer for your app usage to limit your screen time</string>
+    <string name="notification_permission_title">Enable permission to protection</string>
+    <string name="notification_permission_description">Please enable notification permissions to use app monitor</string>
+    <string name="permission_required_title">Permission required</string>
+    <string name="usage_data_permission_details">To monitor your app usage, we need your permission to access data usage. We never share this information to any third party organisation</string>
+    <string name="overlay_permission_details">We need overlay permission to show a prompt when you exceeds the daily app usage time</string>
+    <string name="threshold_time_title">Select the threshold time</string>
+    <string name="threshold_time_description">If your ##app_name## usage time cross this threshold, we will advise you to stop using this app.</string>
+    <string name="quick_puzzle_title">Solve below puzzle to unlock the app</string>
+</resources>
