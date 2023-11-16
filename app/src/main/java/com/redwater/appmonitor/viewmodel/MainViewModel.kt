@@ -5,7 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import androidx.activity.ComponentActivity
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +22,10 @@ import com.redwater.appmonitor.ui.OverlayPermission
 import com.redwater.appmonitor.ui.PermissionState
 import com.redwater.appmonitor.ui.PermissionType
 import com.redwater.appmonitor.ui.UsagePermission
+import com.redwater.appmonitor.workmanager.FirebaseSyncWorker
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class MainViewModel(private val preferenceRepository: AppUsageStatsRepository,): ViewModel() {
@@ -38,9 +40,9 @@ class MainViewModel(private val preferenceRepository: AppUsageStatsRepository,):
         private set
     var permissionStateMap = mutableStateMapOf<Int, PermissionState>()
     private val permissionManager = PermissionManager()
-    private val TAG = "MainViewModel"
+    private val TAG = this::class.simpleName
 
-    var isServiceRunning = mutableStateOf(false)
+    var isServiceRunning = mutableStateOf(OverlayService.isRunning)
         private set
 
     init {
@@ -49,20 +51,22 @@ class MainViewModel(private val preferenceRepository: AppUsageStatsRepository,):
 
     private fun startService(context: Context){
         if (OverlayService.isRunning.not()){
-            ServiceManager.startService(context = context)
-            isServiceRunning.value = true
+            viewModelScope.launch {
+                ServiceManager.startService(context = context)
+                //isServiceRunning.value = true
+            }
         }
     }
 
     private fun stopService(context: Context){
         if (OverlayService.isRunning){
             ServiceManager.stopService(context = context)
-            isServiceRunning.value = false
+            //isServiceRunning.value = false
         }
     }
 
     fun getPermissionState(context: Context){
-        Logger.d("$TAG => getting permission")
+        Logger.d(TAG, "getting permission")
         val usagePermission = permissionManager.hasUsagePermission(context)
         val overlayPermission = permissionManager.hasOverlayPermission(context)
         var notificationPermission = true
@@ -83,45 +87,48 @@ class MainViewModel(private val preferenceRepository: AppUsageStatsRepository,):
                     context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}")))
             }
             PermissionType.notificationPermission ->{
-                Logger.d("$TAG => type: $type isPositive: $isPositive ")
+                Logger.d(TAG, "type: $type isPositive: $isPositive ")
                 permissionStateMap[PermissionType.notificationPermission]?.hasPermission = isPositive
             }
         }
     }
 
-
     fun getAppUsageTime(context: Context){
-        Logger.d("$TAG => getting app usage")
+        Logger.d(TAG, "getting app usage")
         if (permissionManager.hasUsagePermission(context).not()){
             popUp.value = PopUp.Show(PermissionType.usagePermission)
             return
         }
         isLoadingData.value = true
         viewModelScope.launch {
-            try{
-                val allApps = preferenceRepository.getAllAvailableApps(context = context)
-                val allAppUsageMap = preferenceRepository.getAllAppUsageStats(context, allApps)
-                val savedAppList = preferenceRepository.getAllRecords()
-                savedAppList.forEach {appModel->
-                    if (allAppUsageMap.containsKey(appModel.packageName)){
-                        allAppUsageMap[appModel.packageName]?.let {appUsageStats->
-                            allAppUsageMap[appModel.packageName] = appUsageStats.copy(isSelected = true, thresholdTime = appModel.thresholdTime)
+            withContext(Dispatchers.Default){
+                try{
+                    val allApps = preferenceRepository.getAllAvailableApps(context = context)
+                    val allAppUsageMap = preferenceRepository.getAllAppUsageStats(context, allApps)
+                    val savedAppList = preferenceRepository.getAllRecords()
+                    savedAppList.forEach {appModel->
+                        if (allAppUsageMap.containsKey(appModel.packageName)){
+                            allAppUsageMap[appModel.packageName]?.let {appUsageStats->
+                                allAppUsageMap[appModel.packageName] = appUsageStats.copy(isSelected = true, thresholdTime = appModel.thresholdTime)
+                            }
                         }
                     }
-                }
-                allAppUsageMap.forEach { (key, value) ->
-                    Logger.d("$TAG=> $key: $value")
-                    if (value.isSelected){
-                        uiStateSelected.add(value)
-                    }else{
-                       uiState.add(value)
+                    allAppUsageMap.forEach { (key, value) ->
+                        Logger.d(TAG, "$key: $value")
+                        if (value.isSelected){
+                            uiStateSelected.add(value)
+                        }else{
+                            uiState.add(value)
+                        }
                     }
-                }
+                    uiStateSelected.sortWith(compareBy { it.usageTime })
+                    uiState.sortWith(compareBy { it.name })
 
-            }catch (e: Exception){
-                e.printStackTrace()
+                }catch (e: Exception){
+                    e.printStackTrace()
+                }
+                isLoadingData.value = false
             }
-            isLoadingData.value = false
         }
     }
 

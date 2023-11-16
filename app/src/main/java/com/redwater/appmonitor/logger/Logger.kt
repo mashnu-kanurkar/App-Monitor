@@ -3,41 +3,48 @@ package com.redwater.appmonitor.logger
 import android.util.Log
 
 object Logger {
-    private const val TAG = "AppMonitor"
+
     private var logLevel = LogLevel.OFF
 
     fun setLogLevel(level: LogLevel) {
         logLevel = level
     }
 
-    fun d(message: String) {
+    fun v(tag: String?, message: String){
+        if (logLevel <=LogLevel.VERBOSE){
+            Log.v(tag, message)
+        }
+    }
+
+    fun d(tag: String?, message: String) {
         if (logLevel <= LogLevel.DEBUG) {
-            Log.d(TAG, message)
+            Log.d(tag, message)
         }
     }
 
-    fun i(message: String) {
+    fun i(tag: String?, message: String) {
         if (logLevel <= LogLevel.INFO) {
-            Log.i(TAG, message)
+            Log.i(tag, message)
         }
     }
 
-    fun w(message: String) {
+    fun w(tag: String?, message: String) {
         if (logLevel <= LogLevel.WARNING) {
-            Log.w(TAG, message)
+            Log.w(tag, message)
         }
     }
 
-    fun e(message: String) {
+    fun e(tag: String?, message: String) {
         if (logLevel <= LogLevel.ERROR) {
-            Log.e(TAG, message)
+            Log.e(tag, message)
         }
     }
 }
 
 enum class LogLevel {
-    INFO,
+    VERBOSE,
     DEBUG,
+    INFO,
     WARNING,
     ERROR,
     OFF

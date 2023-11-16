@@ -1,6 +1,5 @@
 package com.redwater.appmonitor.ui.screens
 
-import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -34,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -47,9 +47,9 @@ import androidx.lifecycle.LifecycleOwner
 import com.redwater.appmonitor.R
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.ui.PermissionType
-import com.redwater.appmonitor.ui.components.PermissionAlertDialog
 import com.redwater.appmonitor.ui.components.ErrorDescriptor
 import com.redwater.appmonitor.ui.components.LoadingIndicator
+import com.redwater.appmonitor.ui.components.PermissionAlertDialog
 import com.redwater.appmonitor.ui.components.TimeSelectionDialog
 import com.redwater.appmonitor.viewmodel.MainViewModel
 
@@ -86,7 +86,7 @@ fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
         // for sending analytics events
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) {
-                Logger.d("$TAG => on start")
+                Logger.d(TAG, "on start")
                 mainViewModel.getPermissionState(context)
                 if (uiState.isEmpty() && permissionState.get(PermissionType.usagePermission)?.hasPermission == true){
                     mainViewModel.getAppUsageTime(context)
@@ -117,20 +117,29 @@ fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
     ) {paddingValues->
         Box(modifier = Modifier.padding(paddingValues)){
             Column() {
-                Text(modifier = Modifier
+                Box(modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp)
+                    .padding(0.dp, 8.dp)
                     .background(
-                        color = if (isServiceRunning) Color.Green else Color.Red
-                    ),
-                    text = if (isServiceRunning) stringResource(id = R.string.running_service) else stringResource(id = R.string.stopped_service),
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelSmall
-                )
+                        color = if (isServiceRunning) Color.Green else Color.Red),
+                ){
+                    Text(modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp, 0.dp),
+                        text = if (isServiceRunning) stringResource(id = R.string.running_service) else stringResource(id = R.string.stopped_service),
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
 
                 permissionState.keys.forEach {permissionType->
                     if (permissionState[permissionType]?.hasPermission == false){
-                        permissionState[permissionType]?.errorDescription?.let { ErrorDescriptor(error = it) }
+                        permissionState[permissionType]?.errorDescription?.let {
+                            ErrorDescriptor(error = it){
+                                permissionPopUpType = permissionType
+                                showPermissionPopUp = true
+                            }
+                        }
                     }
                 }
                 Text(modifier = Modifier
@@ -163,7 +172,9 @@ fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
                             horizontalArrangement = Arrangement.SpaceAround,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            LinearProgressIndicator(modifier = Modifier.padding(8.dp, 2.dp).weight(1f), progress = usageIndicatorValue)
+                            LinearProgressIndicator(modifier = Modifier
+                                .padding(8.dp, 2.dp)
+                                .weight(1f), progress = usagePercentage.toFloat())
                             Text(text = "Limit: ${appInfo.thresholdTime}", style = MaterialTheme.typography.labelSmall)
                         }
                     }
@@ -246,7 +257,8 @@ fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
 
 @Composable
 fun PackageInfoCard(
-    icon: Drawable?, name: String,
+    icon: ImageBitmap?,
+    name: String,
     packageName: String,
     isSelected: Boolean,
     index: Int,
@@ -264,7 +276,7 @@ fun PackageInfoCard(
         Image(modifier = Modifier
             .size(48.dp)
             .padding(4.dp),
-            bitmap = icon?.toBitmap(48, 48)?.asImageBitmap()?:
+            bitmap = icon?:
             context.packageManager.getApplicationIcon(context.packageName).toBitmap(48, 48).asImageBitmap(),
             contentDescription = "app icon")
         Column(modifier = Modifier

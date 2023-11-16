@@ -1,11 +1,8 @@
 package com.redwater.appmonitor.data.model
 
-import android.graphics.drawable.Drawable
-import android.graphics.drawable.Icon
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.room.ColumnInfo
-import androidx.room.Embedded
 import androidx.room.Entity
-import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import com.redwater.appmonitor.Constants
 
@@ -35,7 +32,8 @@ data class AppModel(
     val isSelected: Boolean = false,
     var usageTime: Long = 0,
     val thresholdTime: Short = Short.MAX_VALUE,
-    val icon: Drawable? = null
+    val icon: ImageBitmap? = null,
+    val usageDistribution: MutableMap<Short, Long> = mutableMapOf()
 )
 
 fun AppModel.toAppRoomModel(): AppRoomModel{

@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.AppMonitor" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.AppMonitor" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="fontFamily">@font/roboto_light</item>
+        <item name="android:fontFamily">@font/roboto_light</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/onPrimary</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorOnSecondary">@color/onSecondary</item>
+        <item name="colorTertiary">@color/tertiary</item>
+        <item name="colorOnTertiary">@color/onTertiary</item>
+        <item name="colorError">#ba1a1a</item>
+        <item name="colorOnError">#ffffff</item>
+        <item name="android:colorBackground">#fafdfa</item>
+        <item name="colorOnBackground">#191c1b</item>
+        <item name="colorOutline">#6f7975</item>
+        <item name="colorPrimaryContainer">#63fad9</item>
+        <item name="colorOnPrimaryContainer">#00201a</item>
+        <item name="colorSecondaryContainer">#cde8df</item>
+        <item name="colorOnSecondaryContainer">#07201a</item>
+        <item name="colorSurface">#fafdfa</item>
+        <item name="colorOnSurface">#191c1b</item>
+    </style>
 </resources>

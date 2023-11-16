@@ -1,7 +1,6 @@
 package com.redwater.appmonitor.permissions
 
 import android.Manifest
-import android.app.Activity
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.pm.PackageManager
@@ -15,7 +14,7 @@ import androidx.core.app.ActivityCompat
 import com.redwater.appmonitor.logger.Logger
 
 class PermissionManager {
-    private val TAG = "PermissionManager"
+    private val TAG = this::class.simpleName
     // 0 = MODE_ALLOWED
     fun hasUsagePermission(context: Context): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
@@ -33,13 +32,13 @@ class PermissionManager {
     fun hasNotificationPermission(context: Context): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-                Logger.d("$TAG => hasPermission: true")
+                Logger.d(TAG, "hasPermission: true")
                 return true
             }
-            Logger.d("$TAG => hasPermission1: false")
+            Logger.d(TAG, "hasPermission1: false")
             return false
         }
-        Logger.d("$TAG => hasPermission2: false")
+        Logger.d(TAG, "hasPermission2: true")
         return true
     }
 

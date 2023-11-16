@@ -1,5 +1,6 @@
 package com.redwater.appmonitor.ui.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,8 +18,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ErrorDescriptor(error: String) {
-    Row(modifier = Modifier.fillMaxWidth().padding(8.dp),
+fun ErrorDescriptor(error: String, onClick:()-> Unit) {
+    Row(modifier = Modifier.fillMaxWidth().padding(8.dp)
+        .clickable {
+           onClick.invoke()
+    },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
@@ -30,5 +34,5 @@ fun ErrorDescriptor(error: String) {
 @Preview
 @Composable
 fun ErrorDescriptorPreview() {
-    ErrorDescriptor(error = "No permission")
+    ErrorDescriptor(error = "No permission"){}
 }

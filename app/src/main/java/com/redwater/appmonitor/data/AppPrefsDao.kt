@@ -5,12 +5,10 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.redwater.appmonitor.Constants
-import com.redwater.appmonitor.data.model.AppModel
 import com.redwater.appmonitor.data.model.AppRoomModel
 
 @Dao
 interface AppPrefsDao {
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(appModel: AppRoomModel)
 

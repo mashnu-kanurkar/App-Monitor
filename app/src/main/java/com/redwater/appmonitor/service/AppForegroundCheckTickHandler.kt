@@ -13,14 +13,14 @@ class AppForegroundCheckTickHandler(private val serviceScope: CoroutineScope,
     // Backing property to avoid flow emissions from other classes
     private val _tickFlow = MutableSharedFlow<Unit>(replay = 0)
     val tickFlow = _tickFlow.asSharedFlow()
-    private val TAG = "AppForegroundCheckTickHandler"
+    private val TAG = this::class.simpleName
 
     init {
         serviceScope.launch {
             while (true){
                 ensureActive()
                 _tickFlow.emit(Unit)
-                Logger.d("$TAG => emitted tick")
+                Logger.v(TAG, "emitted tick")
                 delay(tickIntervalMs)
             }
         }

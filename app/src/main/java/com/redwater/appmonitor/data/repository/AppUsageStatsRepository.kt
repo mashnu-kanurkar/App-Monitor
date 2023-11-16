@@ -7,23 +7,24 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
-import com.redwater.appmonitor.data.model.AppModel
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
 import com.redwater.appmonitor.data.AppPrefsDao
 import com.redwater.appmonitor.data.model.AppAndTime
+import com.redwater.appmonitor.data.model.AppModel
 import com.redwater.appmonitor.data.model.toAppModel
 import com.redwater.appmonitor.data.model.toAppRoomModel
 import com.redwater.appmonitor.logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Calendar
-import kotlin.Exception
 
 class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
 
-    private val TAG = "PreferenceRepository"
+    private val TAG = this::class.simpleName
 
     suspend fun getAllRecords(): List<AppModel>{
-        Logger.d("$TAG => fetching all records")
+        Logger.d(TAG, "fetching all records")
         return withContext(Dispatchers.IO){
             val appRoomModelList = appPrefsDao.getAllRecords()
             val appModelList = mutableListOf<AppModel>()
@@ -35,14 +36,14 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
     }
 
     suspend fun insertPrefsFor(appModel: AppModel){
-        Logger.d("$TAG => inserting record $appModel")
+        Logger.d(TAG, "inserting record $appModel")
         withContext(Dispatchers.IO){
             appPrefsDao.insert(appModel.toAppRoomModel())
         }
     }
 
     suspend fun deletePrefsFor(packageName: String){
-        Logger.d("$TAG => deleting record for $packageName")
+        Logger.d(TAG, "deleting record for $packageName")
         withContext(Dispatchers.IO){
             appPrefsDao.deleteAppPrefs(packageName)
         }
@@ -76,7 +77,7 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
                 val packageName = resolveInfo.activityInfo.packageName
                 val iconDrawable = resolveInfo.activityInfo.loadIcon(pm)
                 allAppMap[packageName] =
-                    AppModel(packageName = packageName, name = appName, icon = iconDrawable)
+                    AppModel(packageName = packageName, name = appName, icon = iconDrawable.toBitmap(48, 48).asImageBitmap())
             }
             return@withContext allAppMap
         }
@@ -88,12 +89,18 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
         }else{
             val packageName = usageStatsMap.keys.first()
             var timeInMin: Short = 0
+            var usageDist: MutableMap<Short, Long> = mutableMapOf()
             usageStatsMap[packageName]?.let {
                 timeInMin = (it.usageTime/(1000*60)).toShort()
+                Logger.d(TAG, "usage dist => ${it.usageDistribution}")
+                Logger.d(TAG, "usage dist keys => ${it.usageDistribution.keys}")
+                Logger.d(TAG, "usage dist values => ${it.usageDistribution.values}")
+                usageDist = it.usageDistribution
             }
             AppAndTime(
                 packageName = packageName,
-                time = timeInMin
+                time = timeInMin,
+                usageDist = usageDist
             )
         }
     }
@@ -123,12 +130,12 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
                             continue
                         }
                         val packageManager = context.packageManager
-                        val applicationInfo = getApplicationInfo(context = context, packageName = event.packageName, packageManager = packageManager)
+                        val applicationInfo = getApplicationInfo(
+                            packageName = event.packageName,
+                            packageManager = packageManager
+                        )
+                        //do not add if it is system app or self app (App monitor)
                         if (isSystemApp(applicationInfo = applicationInfo).not() && (event.packageName == (context.packageName)).not()){
-//                            allUsageMap[event.packageName] =
-//                                AppUsageStats(packageName = event.packageName,
-//                                    appName = getApplicationLabel(applicationInfo = applicationInfo, packageManager = packageManager),
-//                                    appIcon = context.packageManager.getApplicationIcon(event.packageName))
                            allEventList.add(event)
                         }
                     }
@@ -144,7 +151,6 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
             for (index in 0 until (allEventList.size-1)){
                 val e0 = allEventList[index]
                 val e1 = allEventList[(index + 1)]
-
 //                //for launchCount of apps in time range
 //                if (!e0.packageName.equals(e1.packageName) && e1.eventType ==1){
 //                    // if true, E1 (launch event of an app) app launched
@@ -153,16 +159,27 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
 //                    }
 //                }
                 //for UsageTime of apps in time range
+                //1 = resumed and 2 = paused
                 if (e0.eventType == 1 && e1.eventType == 2
                     && e0.className.equals(e1.className)){
                     val diff = e1.timeStamp - e0.timeStamp;
                     allUsageMap.get(e0.packageName)?.let {
                         it.usageTime += diff
+                        val hr0: Short = ((e0.timeStamp - calendar.timeInMillis)/(60*1000*60)).toShort()
+                        val hr1: Short = ((e1.timeStamp - calendar.timeInMillis)/(60*1000*60)).toShort()
+                        if (hr0 == hr1){
+                            val oldValue: Long = it.usageDistribution.get(hr0) ?:0
+                            it.usageDistribution.put(key = hr0, value = oldValue + (diff/(60*1000)))
+                            Logger.d(TAG, "Updated distribution: ${it.usageDistribution.get(key = hr0)}")
+                        }else{
+                            val oldValue0: Long = it.usageDistribution.get(hr0) ?:0
+                            val oldValue1: Long = it.usageDistribution.get(hr1) ?:0
+                            val postHourSeconds = (e0.timeStamp - calendar.timeInMillis)%(60*1000*60)
+                            val secondsInMilliTillNextHour = (3600 - postHourSeconds)*1000
+                            it.usageDistribution.put(key = hr0, value = oldValue0 + secondsInMilliTillNextHour)
+                            it.usageDistribution.put(key = hr1, value = oldValue1 + diff - secondsInMilliTillNextHour)
+                        }
                     }
-                    //We can not use direct short conversion here, as the error rate directly proportional to event count (launch count)
-//                    if (e0.packageName.contains("com.instagram.android")){
-//                        instaUsageInShort = (instaUsageInShort + (diff/(1000*60))).toShort()
-//                    }
                 }
 
             }
@@ -170,7 +187,7 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
         }
     }
 
-    private fun getApplicationInfo(context: Context, packageName: String, packageManager: PackageManager): ApplicationInfo?{
+    private fun getApplicationInfo(packageName: String, packageManager: PackageManager): ApplicationInfo?{
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
                 packageManager.getApplicationInfo(packageName, PackageManager.ApplicationInfoFlags.of(0L))
@@ -196,6 +213,12 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
         return  applicationInfo?.let { appInfo ->
             packageManager.getApplicationLabel(appInfo).toString()
         } ?: "No Name"
+    }
+
+    fun getAppsUsageData(context: Context){
+        val pm = context.packageManager
+        val usageStatsManager =
+            context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
     }
 
 }

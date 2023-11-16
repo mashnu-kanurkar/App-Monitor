@@ -27,15 +27,19 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppMonitor"
         tools:targetApi="31">
+        <activity
+            android:name=".Analytics"
+            android:exported="false" />
+
+        <profileable android:shell="true" />
 
         <service
             android:name=".service.OverlayService"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true"></service>
 
-        </service>
-
-        <receiver android:name=".service.receiver.BootCompleteReceiver"
+        <receiver
+            android:name=".service.receiver.BootCompleteReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -53,6 +57,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <meta-data
+            android:name="preloaded_fonts"
+            android:resource="@array/preloaded_fonts" />
     </application>
 
 </manifest>

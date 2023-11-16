@@ -1,3 +1,3 @@
 package com.redwater.appmonitor.ui.models
 
-data class HintText(val text: String, val textColor: String?)
+data class HintText(val text: String, val textColor: String? = null)

@@ -5,14 +5,16 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.redwater.appmonitor.Constants
-import com.redwater.appmonitor.data.model.AppModel
 import com.redwater.appmonitor.data.model.AppRoomModel
+import com.redwater.appmonitor.data.model.OverlayPayload
 
 
-@Database(entities = [AppRoomModel::class], version = 1, exportSchema = false)
+@Database(entities = [AppRoomModel::class, OverlayPayload::class], version = 1, exportSchema = true)
 abstract class AppDatabase: RoomDatabase() {
 
     abstract fun getAppPrefsDao(): AppPrefsDao
+
+    abstract fun getOverlayDataDao(): OverlayDataDao
 
     companion object{
         @Volatile

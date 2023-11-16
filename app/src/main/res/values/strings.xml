@@ -1,16 +1,28 @@
 <resources>
     <string name="app_name">App Monitor</string>
+    <string name="app_icon">App icon</string>
     <string name="running_service"> Service is running</string>
-    <string name="stopped_service"> Service is stopped</string>
+    <string name="stopped_service"> Service is stopped. Please reselect apps</string>
     <string name="info">Select the apps for which you want to monitor the usage time</string>
-    <string name="notification_protecting_title">Monitoring your app usage</string>
-    <string name="notification_protecting_description">Set timer for your app usage to limit your screen time</string>
+    <string name="notification_protecting_title">App Monitor</string>
+    <string name="notification_protecting_description">Monitoring your app usage</string>
     <string name="notification_permission_title">Enable permission to protection</string>
     <string name="notification_permission_description">Please enable notification permissions to use app monitor</string>
     <string name="permission_required_title">Permission required</string>
-    <string name="usage_data_permission_details">To monitor your app usage, we need your permission to access data usage. We never share this information to any third party organisation</string>
-    <string name="overlay_permission_details">We need overlay permission to show a prompt when you exceeds the daily app usage time</string>
+    <string name="usage_data_permission_details">To monitor your app usage, we need permission to access data usage. We never share this information to any third party organisations.</string>
+    <string name="overlay_permission_details">We need overlay permission to show a prompt when you exceeds the daily app usage time.</string>
     <string name="threshold_time_title">Select the threshold time</string>
     <string name="threshold_time_description">If your ##app_name## usage time cross this threshold, we will advise you to stop using this app.</string>
     <string name="quick_puzzle_title">Solve below puzzle to unlock the app</string>
+    <string name="solve_puzzle">Solve below puzzle</string>
+    <string name="time_left">Time left</string>
+    <string name="inspirational_image">Inspirational image</string>
+    <string name="close_app">Close App</string>
+    <string name="open_app">Open App</string>
+    <string name="exceed_usage">Today\'s usage limit is exceeded</string>
+    <string name="set_limit">Set limit: ##limit##</string>
+    <string name="total_usage">Total usage: ##usage##</string>
+    <string name="delay_minutes">Delay 15 min</string>
+    <string name="game_title">Win this simple game to unlock the app</string>
+    <string name="num_count_game_info">Your aim is to achieve the number ##target## by selecting any number in a range of ##range_low## to ##range_high##.</string>
 </resources>

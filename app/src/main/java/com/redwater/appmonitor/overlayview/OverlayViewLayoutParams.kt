@@ -1,4 +1,4 @@
-package com.redwater.appmonitor.ui.components
+package com.redwater.appmonitor.overlayview
 
 import android.graphics.PixelFormat
 import android.os.Build

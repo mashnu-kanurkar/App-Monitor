@@ -6,9 +6,9 @@ import android.content.Context
 import com.redwater.appmonitor.logger.Logger
 
 class AppObserver {
+    private val TAG = this::class.simpleName
     companion object{
         private var INSTANCE: AppObserver? = null
-        private const val TAG = "AppObserver"
 
         fun getInstance(): AppObserver {
             return INSTANCE ?: synchronized(this){
@@ -27,7 +27,7 @@ class AppObserver {
         while (usageEvents.hasNextEvent()) {
             usageEvents.getNextEvent(event)
             if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
-                Logger.d("$TAG => timestamp is ${event.timeStamp}")
+                Logger.d(TAG, "timestamp is ${event.timeStamp}")
                return event.packageName
             }
         }

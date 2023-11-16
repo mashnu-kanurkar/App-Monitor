@@ -26,7 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.redwater.appmonitor.R
-import com.redwater.appmonitor.ui.screens.PackageInfoCard
 
 @Composable
 fun LoadingIndicator(message: String = "Loading data...") {
