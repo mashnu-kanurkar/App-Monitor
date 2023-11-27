@@ -20,4 +20,7 @@ interface AppPrefsDao {
 
     @Query("DELETE FROM ${Constants.appPrefsTable} WHERE ${Constants.AppPrefsColumns.packageName} LIKE :packageName")
     fun deleteAppPrefs(packageName: String)
+
+    @Query("UPDATE ${Constants.appPrefsTable} SET ${Constants.AppPrefsColumns.delay} = :delayInMin WHERE ${Constants.AppPrefsColumns.packageName} LIKE :packageName")
+    fun updateDelay(packageName: String, delayInMin: Short)
 }

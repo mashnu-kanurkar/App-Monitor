@@ -38,7 +38,7 @@ class ImageViewAdapter(val context: Context, private val imageOptionList: List<I
             if (imageOptionList[position].isAnswer){
                 overlayViewActionListener?.onOpenAppAction()
             }else{
-                overlayViewActionListener?.onCloseAppAction()
+                overlayViewActionListener?.onDismissOverlayAction()
             }
         }
         return view

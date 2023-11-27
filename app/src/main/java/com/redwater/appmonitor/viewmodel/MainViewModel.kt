@@ -174,12 +174,6 @@ class MainViewModel(private val preferenceRepository: AppUsageStatsRepository,):
     }
 }
 
-class MainViewModelFactory(private val preferenceRepository: AppUsageStatsRepository): ViewModelProvider.Factory{
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return modelClass.getConstructor(AppUsageStatsRepository::class.java).newInstance(preferenceRepository)
-    }
-}
-
 sealed class PopUp{
     class Show(val type: Int): PopUp()
     object Hide: PopUp()

@@ -10,7 +10,7 @@ import android.os.Build
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import com.redwater.appmonitor.data.AppPrefsDao
-import com.redwater.appmonitor.data.model.AppAndTime
+import com.redwater.appmonitor.data.model.AppDataFromSystem
 import com.redwater.appmonitor.data.model.AppModel
 import com.redwater.appmonitor.data.model.toAppModel
 import com.redwater.appmonitor.data.model.toAppRoomModel
@@ -32,6 +32,13 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
                 appModelList.add(it.toAppModel())
             }
             return@withContext appModelList
+        }
+    }
+
+    suspend fun addDelay(packageName: String,delayInMin: Short){
+        Logger.d(TAG, "adding delay of $delayInMin for $packageName")
+        withContext(Dispatchers.IO){
+            appPrefsDao.updateDelay(packageName, delayInMin)
         }
     }
 
@@ -82,24 +89,24 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
             return@withContext allAppMap
         }
     }
-    suspend fun getAppUsageStatsFor(packageName: String, context: Context):AppAndTime?{
+    suspend fun getAppUsageStatsFor(packageName: String, context: Context):AppDataFromSystem?{
         val usageStatsMap = getAppUsageStats(context, hashMapOf(packageName to AppModel(packageName = packageName)))
         return if (usageStatsMap.isEmpty()){
             null
         }else{
-            val packageName = usageStatsMap.keys.first()
+            val packageNameFirstKey = usageStatsMap.keys.first()
             var timeInMin: Short = 0
             var usageDist: MutableMap<Short, Long> = mutableMapOf()
             usageStatsMap[packageName]?.let {
                 timeInMin = (it.usageTime/(1000*60)).toShort()
-                Logger.d(TAG, "usage dist => ${it.usageDistribution}")
-                Logger.d(TAG, "usage dist keys => ${it.usageDistribution.keys}")
-                Logger.d(TAG, "usage dist values => ${it.usageDistribution.values}")
                 usageDist = it.usageDistribution
             }
-            AppAndTime(
-                packageName = packageName,
-                time = timeInMin,
+            usageDist.map {
+                Logger.d(TAG, "usageDist: key ${it.key}: value ${it.value}")
+            }
+            AppDataFromSystem(
+                packageName = packageNameFirstKey,
+                usageTime = timeInMin,
                 usageDist = usageDist
             )
         }
@@ -121,6 +128,7 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
             val usageStatsManager =
                 context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
             val usageEvents = usageStatsManager.queryEvents(startTime, endTime)
+
             while (usageEvents.hasNextEvent()) {
                 val event = UsageEvents.Event()
                 usageEvents.getNextEvent(event)
@@ -151,33 +159,37 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
             for (index in 0 until (allEventList.size-1)){
                 val e0 = allEventList[index]
                 val e1 = allEventList[(index + 1)]
-//                //for launchCount of apps in time range
-//                if (!e0.packageName.equals(e1.packageName) && e1.eventType ==1){
-//                    // if true, E1 (launch event of an app) app launched
-//                    allUsageMap.get(e1.packageName)?.let {
-//                        ++ it.launchCount
-//                    }
-//                }
+                //for launchCount of apps in time range
+                if (!e0.packageName.equals(e1.packageName) && e1.eventType ==1){
+                    // if true, E1 (launch event of an app) app launched
+                    allUsageMap.get(e1.packageName)?.let {
+                        ++ it.launchCountToday
+                    }
+                }
                 //for UsageTime of apps in time range
                 //1 = resumed and 2 = paused
                 if (e0.eventType == 1 && e1.eventType == 2
                     && e0.className.equals(e1.className)){
                     val diff = e1.timeStamp - e0.timeStamp;
-                    allUsageMap.get(e0.packageName)?.let {
+                    Logger.d(TAG, "package wise usage dist,${e0.packageName},${e0.eventType},${e0.timeStamp},${e1.packageName},${e1.eventType},${e1.timeStamp}")
+                    allUsageMap[e0.packageName]?.let {
                         it.usageTime += diff
                         val hr0: Short = ((e0.timeStamp - calendar.timeInMillis)/(60*1000*60)).toShort()
                         val hr1: Short = ((e1.timeStamp - calendar.timeInMillis)/(60*1000*60)).toShort()
                         if (hr0 == hr1){
-                            val oldValue: Long = it.usageDistribution.get(hr0) ?:0
-                            it.usageDistribution.put(key = hr0, value = oldValue + (diff/(60*1000)))
-                            Logger.d(TAG, "Updated distribution: ${it.usageDistribution.get(key = hr0)}")
+                            val oldValue: Long = it.usageDistribution[hr0] ?:0
+                            it.usageDistribution.put(key = hr0, value = oldValue + (diff/1000))
+                            Logger.d(TAG, "Updated distribution (hr0==hr1) hr0: key $hr0 value ${oldValue + (diff/(60*1000))}")
                         }else{
-                            val oldValue0: Long = it.usageDistribution.get(hr0) ?:0
-                            val oldValue1: Long = it.usageDistribution.get(hr1) ?:0
-                            val postHourSeconds = (e0.timeStamp - calendar.timeInMillis)%(60*1000*60)
-                            val secondsInMilliTillNextHour = (3600 - postHourSeconds)*1000
-                            it.usageDistribution.put(key = hr0, value = oldValue0 + secondsInMilliTillNextHour)
-                            it.usageDistribution.put(key = hr1, value = oldValue1 + diff - secondsInMilliTillNextHour)
+                            val oldValue0: Long = it.usageDistribution[hr0] ?:0
+                            val oldValue1: Long = it.usageDistribution[hr1] ?:0
+                            val postHourSecondsInMilli = (e0.timeStamp - calendar.timeInMillis)%(60*1000*60)
+                            val postHourSeconds = postHourSecondsInMilli/1000
+                            val secondsTillNextHour = (3600 - postHourSeconds)
+                            it.usageDistribution.put(key = hr0, value = oldValue0 + secondsTillNextHour)
+                            it.usageDistribution.put(key = hr1, value = oldValue1 + ((diff/1000) - secondsTillNextHour))
+                            Logger.d(TAG, "Updated distribution (hr0 /= hr1) hr0: key $hr0 value ${oldValue0 + secondsTillNextHour}")
+                            Logger.d(TAG, "Updated distribution (hr0 /= hr1) hr1: key $hr1 value ${oldValue1 + diff - secondsTillNextHour}")
                         }
                     }
                 }

@@ -14,8 +14,6 @@ import com.redwater.appmonitor.data.model.ImageOption
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.overlayview.BaseOverlayView
 import com.redwater.appmonitor.overlayview.ImageViewAdapter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -104,7 +102,7 @@ class PuzzleViewImage(context: Context,
                     timeLimit -= 1
                     delay(1000)
                     if (timeLimit < 0){
-                        mOverlayViewActionListener?.onCloseAppAction()
+                        mOverlayViewActionListener?.onDismissOverlayAction()
                         scope.cancel()
                     }
                 }

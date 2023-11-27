@@ -1,5 +1,6 @@
 package com.redwater.appmonitor.ui.screens
 
+import android.content.Context
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,18 +13,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -33,14 +27,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
@@ -49,22 +39,24 @@ import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.ui.PermissionType
 import com.redwater.appmonitor.ui.components.ErrorDescriptor
 import com.redwater.appmonitor.ui.components.LoadingIndicator
+import com.redwater.appmonitor.ui.components.PackageInfoCard
 import com.redwater.appmonitor.ui.components.PermissionAlertDialog
 import com.redwater.appmonitor.ui.components.TimeSelectionDialog
 import com.redwater.appmonitor.viewmodel.MainViewModel
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
-               mainViewModel: MainViewModel) {
+               mainViewModel: MainViewModel,
+               modifier: Modifier = Modifier,
+               context: Context = LocalContext.current,
+               onNavigateNext: (packageName: String)-> Unit
+               ) {
     val TAG = "HomeScreen"
     val uiState = mainViewModel.uiState
     val uiStateSelected = mainViewModel.uiStateSelected
     val isLoadingData by mainViewModel.isLoadingData
     val permissionState = mainViewModel.permissionStateMap
-    val context = LocalContext.current
-    val snackbarHostState = remember { SnackbarHostState() }
+
     var showPermissionPopUp by remember {
         mutableStateOf(false)
     }
@@ -105,23 +97,14 @@ fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
-    Scaffold(
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
-        },
-        topBar = {
-            TopAppBar(
-                title = { Text(text = stringResource(id = R.string.app_name)) }
-            )
-        }
-    ) {paddingValues->
-        Box(modifier = Modifier.padding(paddingValues)){
+        Box(modifier = modifier){
             Column() {
                 Box(modifier = Modifier
                     .fillMaxWidth()
                     .padding(0.dp, 8.dp)
                     .background(
-                        color = if (isServiceRunning) Color.Green else Color.Red),
+                        color = if (isServiceRunning) Color.Green else Color.Red
+                    ),
                 ){
                     Text(modifier = Modifier
                         .fillMaxWidth()
@@ -159,7 +142,8 @@ fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
                             packageName = appInfo.packageName,
                             isSelected = appInfo.isSelected,
                             index = index,
-                            usageTimeInMin = usageTime.toShort()
+                            usageTimeInMin = usageTime.toShort(),
+                            onClick = {packageName -> onNavigateNext.invoke(packageName)}
                         ) { index ->
                             mainViewModel.onAppUnSelected(index = index, context = context.applicationContext)
                         }
@@ -179,13 +163,15 @@ fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
                         }
                     }
                     itemsIndexed(uiState){index, appInfo ->
+
                         PackageInfoCard(
                             icon = appInfo.icon,
                             name = appInfo.name,
                             packageName = appInfo.packageName,
                             isSelected = appInfo.isSelected,
                             index = index,
-                            usageTimeInMin = (appInfo.usageTime/(1000*60)).toShort()
+                            usageTimeInMin = (appInfo.usageTime/(1000*60)).toShort(),
+                            onClick = {packageName -> onNavigateNext.invoke(packageName)}
                         ) {index ->
                             if (permissionState.get(PermissionType.overlayPermission)?.hasPermission == false){
                                 permissionPopUpType = PermissionType.overlayPermission
@@ -251,49 +237,7 @@ fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
             }
 
         }
-
-    }
 }
 
-@Composable
-fun PackageInfoCard(
-    icon: ImageBitmap?,
-    name: String,
-    packageName: String,
-    isSelected: Boolean,
-    index: Int,
-    usageTimeInMin: Short,
-    onClick: (index: Int)->Unit) {
-    val context = LocalContext.current
-    Row(modifier = Modifier
-        .padding(4.dp)
-        .fillMaxWidth()
-        .clickable(enabled = true, onClick = { onClick.invoke(index) }),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
 
-        Image(modifier = Modifier
-            .size(48.dp)
-            .padding(4.dp),
-            bitmap = icon?:
-            context.packageManager.getApplicationIcon(context.packageName).toBitmap(48, 48).asImageBitmap(),
-            contentDescription = "app icon")
-        Column(modifier = Modifier
-            .padding(8.dp, 0.dp)
-            .weight(2.0f, true)
-        ) {
-            Text(text = name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-            Text(text = packageName, style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface)
-            Text(text = "Usage time: $usageTimeInMin Min", style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface)
-        }
-        RadioButton(selected = isSelected,
-            onClick = {
-                onClick.invoke(index)
-            }
-        )
-    }
-}
 

@@ -11,6 +11,7 @@ object Constants {
         const val usageTime = "usage_time"
         const val thresholdTime = "thr_time"
         const val icon = "icon"
+        const val delay = "delay"
     }
     object OverlayDataColumns{
         const val id = "id"

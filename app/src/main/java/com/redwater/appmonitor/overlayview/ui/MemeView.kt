@@ -62,7 +62,7 @@ class MemeView(context: Context,
             .into(memeImage)
         buttonPositive = findViewById<Button>(R.id.meme_button_positive)
         buttonPositive.setOnClickListener {
-            mOverlayViewActionListener?.onCloseAppAction()
+            mOverlayViewActionListener?.onDismissOverlayAction()
         }
         buttonNegative = findViewById(R.id.meme_button_negative)
         buttonNegative.setOnClickListener {

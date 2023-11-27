@@ -1,7 +1,7 @@
 package com.redwater.appmonitor.data.model
 
-data class AppAndTime(
+data class AppDataFromSystem(
     val packageName: String = "",
-    val time: Short = 0,
-    val usageDist: MutableMap<Short, Long> = mutableMapOf()
+    val usageTime: Short = 0,
+    val usageDist: MutableMap<Short, Long> = mutableMapOf(),
 )

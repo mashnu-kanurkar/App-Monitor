@@ -92,7 +92,7 @@ class PuzzleViewText(context: Context,
                     timeLimit -= 1
                     delay(1000)
                     if (timeLimit < 0){
-                        mOverlayViewActionListener?.onCloseAppAction()
+                        mOverlayViewActionListener?.onDismissOverlayAction()
                         scope.cancel()
                     }
                 }

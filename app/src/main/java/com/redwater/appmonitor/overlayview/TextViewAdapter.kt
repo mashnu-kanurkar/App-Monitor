@@ -41,7 +41,7 @@ class TextViewAdapter(val context: Context, private val textOptionList: List<Tex
             if (textOptionList[position].isAnswer){
                 overlayViewActionListener?.onOpenAppAction()
             }else{
-                overlayViewActionListener?.onCloseAppAction()
+                overlayViewActionListener?.onDismissOverlayAction()
             }
         }
         return view

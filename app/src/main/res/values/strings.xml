@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">App Monitor</string>
+    <string name="analytics">Analytics</string>
     <string name="app_icon">App icon</string>
+    <string name="back_button">Back</string>
+    <string name="monitor">Monitor</string>
     <string name="running_service"> Service is running</string>
     <string name="stopped_service"> Service is stopped. Please reselect apps</string>
     <string name="info">Select the apps for which you want to monitor the usage time</string>
@@ -22,7 +25,11 @@
     <string name="exceed_usage">Today\'s usage limit is exceeded</string>
     <string name="set_limit">Set limit: ##limit##</string>
     <string name="total_usage">Total usage: ##usage##</string>
-    <string name="delay_minutes">Delay 15 min</string>
+    <string name="delay_minutes">Delay ##delayMin## min</string>
     <string name="game_title">Win this simple game to unlock the app</string>
     <string name="num_count_game_info">Your aim is to achieve the number ##target## by selecting any number in a range of ##range_low## to ##range_high##.</string>
+    <string name="chart_type"> Chart: ##chartType##</string>
+    <string name="launch_count">Launch count</string>
+    <string name="max_usage">Max usage</string>
+
 </resources>
