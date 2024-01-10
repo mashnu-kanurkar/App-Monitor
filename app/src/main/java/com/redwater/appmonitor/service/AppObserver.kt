@@ -22,8 +22,10 @@ class AppObserver {
 
     fun getForegroundApp(context: Context): AppEvent?{
         val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+
         val time = System.currentTimeMillis()
         val usageEvents = usageStatsManager.queryEvents(time - 1000*5, time)
+
         val event: UsageEvents.Event = UsageEvents.Event()
         while (usageEvents.hasNextEvent()) {
             usageEvents.getNextEvent(event)

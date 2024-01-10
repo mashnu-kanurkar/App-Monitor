@@ -27,5 +27,7 @@ class AppMonitorApp: Application() {
         super.onCreate()
         Logger.setLogLevel(LogLevel.DEBUG)
         Logger.d(TAG, "Build type: ${Build.TYPE}")
+
     }
+
 }

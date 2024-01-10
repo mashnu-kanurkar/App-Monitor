@@ -8,6 +8,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.redwater.appmonitor.Constants
+import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.permissions.PermissionManager
 import com.redwater.appmonitor.workmanager.FirebaseSyncWorker
@@ -23,8 +24,6 @@ object ServiceManager {
 
         if (OverlayService.isRunning.not()){
             val hasSavedAppRecords = true
-
-            Logger.d(TAG, "$hasSavedAppRecords")
             if (hasSavedAppRecords) {
                 val permissionManager = PermissionManager()
                 if (permissionManager.hasOverlayPermission(context) && permissionManager.hasNotificationPermission(context)){
@@ -42,13 +41,25 @@ object ServiceManager {
                         .enqueueUniquePeriodicWork(Constants.firebaseSyncWorkerTag, ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, firebaseSyncWorkRequest)
                 }
             }
+        }else{
+            Logger.d(TAG, "can not start service: no apps listed")
         }
     }
 
-    fun stopService(context: Context, intent: Intent = Intent(context, OverlayService::class.java)){
-        Logger.d(TAG, "stopping service")
-        context.stopService(intent)
-        WorkManager.getInstance(context.applicationContext)
-            .cancelUniqueWork(Constants.foregroundAppWorkerTag)
+    suspend fun stopService(context: Context, intent: Intent = Intent(context, OverlayService::class.java), repository: AppUsageStatsRepository){
+        if (repository.getAllSelectedRecords().isEmpty()){
+            Logger.d(TAG, "stopping service")
+            context.stopService(intent)
+            WorkManager.getInstance(context.applicationContext)
+                .cancelUniqueWork(Constants.foregroundAppWorkerTag)
+        }
     }
+    suspend fun toggleService(context: Context, intent: Intent = Intent(context, OverlayService::class.java), repository: AppUsageStatsRepository){
+        if (repository.getAllSelectedRecords().isEmpty()){
+            stopService(context = context, intent = intent, repository = repository)
+        }else{
+            startService(context = context, intent = intent)
+        }
+    }
+
 }

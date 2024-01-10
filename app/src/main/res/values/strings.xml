@@ -1,15 +1,20 @@
 <resources>
     <string name="app_name">App Monitor</string>
     <string name="analytics">Analytics</string>
+    <string name="home_screen">Home Screen</string>
+    <string name="permission">Permission</string>
     <string name="app_icon">App icon</string>
     <string name="back_button">Back</string>
     <string name="monitor">Monitor</string>
+    <string name="invalid_app">Invalid App selection</string>
+    <string name="default_error_desc">Something went wrong</string>
     <string name="running_service"> Service is running</string>
     <string name="stopped_service"> Service is stopped. Please reselect apps</string>
     <string name="info">Select the apps for which you want to monitor the usage time</string>
-    <string name="notification_protecting_title">App Monitor</string>
-    <string name="notification_protecting_description">Monitoring your app usage</string>
-    <string name="notification_permission_title">Enable permission to protection</string>
+    <string name="notification_title">App Monitor</string>
+    <string name="notification_description">Monitoring your app usage</string>
+    <string name="all_granted">All permissions granted</string>
+    <string name="notification_permission_title">Notification Permission required</string>
     <string name="notification_permission_description">Please enable notification permissions to use app monitor</string>
     <string name="permission_required_title">Permission required</string>
     <string name="usage_data_permission_details">To monitor your app usage, we need permission to access data usage. We never share this information to any third party organisations.</string>
@@ -31,5 +36,18 @@
     <string name="chart_type"> Chart: ##chartType##</string>
     <string name="launch_count">Launch count</string>
     <string name="max_usage">Max usage</string>
+    <string name="button_yes">Yes</string>
+    <string name="button_no">No</string>
+    <string name="button_skip">Skip</string>
+    <string name="button_allow">Allow</string>
+    
+<!--    Stats card-->
+    <string name="today_usage_title">Today\'s usage</string>
+    <string name="launch_ct_title">Launch count</string>
+    <string name="longest_session_title">Longest session</string>
+    <string name="threshold_title">Threshold time</string>
+    <string name="session_id">Session ID</string>
+    <string name="session_length">Session Length</string>
+<!--    -->
 
 </resources>

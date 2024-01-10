@@ -118,19 +118,19 @@ class OverlayService : Service() {
             //try to hide previous overlay, if any
             hideOverlay()
             lastForegroundPackage = foregroundAppPackage
-            val savedPppPrefsMap: Map<String, AppModel> = prefsRepository.getAllRecords().toAppTimeMap()
-            Logger.d(TAG, "saved app keys: ${savedPppPrefsMap.keys}")
-            Logger.d(TAG, "saved app values: ${savedPppPrefsMap.values}")
-            if (savedPppPrefsMap.containsKey(foregroundAppPackage)) {
+            val savedAppPrefsMap: Map<String, AppModel> = prefsRepository.getAllSelectedRecords().toAppTimeMap()
+            Logger.d(TAG, "saved app keys: ${savedAppPrefsMap.keys}")
+            Logger.d(TAG, "saved app values: ${savedAppPrefsMap.values}")
+            if (savedAppPrefsMap.containsKey(foregroundAppPackage)) {
                 val currentAppAndUsageTimeInMin = prefsRepository.getAppUsageStatsFor(context = applicationContext, packageName = foregroundAppPackage)
-                val savedTimeLimit = savedPppPrefsMap[currentAppAndUsageTimeInMin?.packageName]?.thresholdTime ?:(24*60).toShort()
-                val userInitiatedDelay = savedPppPrefsMap[currentAppAndUsageTimeInMin?.packageName]?.delay ?: 0
-                Logger.d(TAG, "threshold time  $savedTimeLimit vs app usage time  ${currentAppAndUsageTimeInMin?.usageTime}")
+                val savedTimeLimit = savedAppPrefsMap[currentAppAndUsageTimeInMin?.packageName]?.thresholdTime ?:(24*60).toShort()
+                val userInitiatedDelay = savedAppPrefsMap[currentAppAndUsageTimeInMin?.packageName]?.delay ?: 0
+                Logger.d(TAG, "threshold time  $savedTimeLimit + delay $userInitiatedDelay vs app usage time  ${currentAppAndUsageTimeInMin?.usageTime}")
                 currentAppAndUsageTimeInMin?.let {
                     if (it.usageTime >= (savedTimeLimit + userInitiatedDelay)){
                         showOverlay(it, savedTimeLimit)
                     }else{
-                        delayedOverlayTask(delayInMin = ((savedTimeLimit + userInitiatedDelay) - it.usageTime).toShort(), currentAppAndUsageTimeInMin = it, savedTimeLimit = savedTimeLimit)
+                        delayedOverlayTask(delayInMin = ((savedTimeLimit + userInitiatedDelay) - it.usageTime).toLong(), currentAppAndUsageTimeInMin = it, savedTimeLimit = savedTimeLimit)
                     }
                 }
 
@@ -138,14 +138,16 @@ class OverlayService : Service() {
         }
     }
 
-    private fun delayedOverlayTask(delayInMin: Short, currentAppAndUsageTimeInMin: AppDataFromSystem, savedTimeLimit: Short, isUserInitiatedDelay: Boolean = false){
+    private fun delayedOverlayTask(delayInMin: Long, currentAppAndUsageTimeInMin: AppDataFromSystem, savedTimeLimit: Short, isUserInitiatedDelay: Boolean = false){
         if (this::foregroundTimeMonitorScope.isInitialized.not()){
             foregroundTimeMonitorScope = CoroutineScope(Dispatchers.Default)
         }
         foregroundTimeMonitorScope.launch {
-            delay(delayInMin.toLong()*60*1000)
+            Logger.d(TAG, "launched delayed task with delay of $delayInMin")
+            delay(delayInMin*60*1000)
+            Logger.d(TAG, "Delay over, will proceed for overlay")
             if (isUserInitiatedDelay)
-                showOverlay(currentAppAndUsageTimeInMin = currentAppAndUsageTimeInMin, savedTimeLimit = savedTimeLimit, withDelayInMin = delayInMin)
+                showOverlay(currentAppAndUsageTimeInMin = currentAppAndUsageTimeInMin, savedTimeLimit = savedTimeLimit, withDelayInMin = delayInMin.toShort(), )
             else
                 showOverlay(currentAppAndUsageTimeInMin = currentAppAndUsageTimeInMin, savedTimeLimit = savedTimeLimit)
         }
@@ -210,6 +212,7 @@ class OverlayService : Service() {
         }
     }
     private fun showOverlay(currentAppAndUsageTimeInMin: AppDataFromSystem, savedTimeLimit: Short, withDelayInMin: Short = 0) {
+        Logger.d(TAG, "Initiating overlay process")
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         overlayParams = OverlayViewLayoutParams.get()
         mainScope.launch {
@@ -226,7 +229,7 @@ class OverlayService : Service() {
             overlayView = OverlayViewProvider(context = applicationContext, overlayPayload = overlayPayload).getView()
             if (overlayPayload.type == "basic"){
                 Logger.d(TAG, "Usage dist: ${currentAppAndUsageTimeInMin.usageDist}")
-                currentAppAndUsageTimeInMin.usageDist.let {
+                currentAppAndUsageTimeInMin.usageDist?.let {
                     Logger.d(TAG, "Usage dist keys: ${it.keys}")
                     Logger.d(TAG, "Usage dist values: ${it.values}")
                     (overlayView as BasicTimeoutView).plotChart(
@@ -238,7 +241,7 @@ class OverlayService : Service() {
                 override fun onDismissOverlayAction(delayInMin: Short) {
                     Logger.d(TAG, "onPositiveAction")
                     if (delayInMin > 0){
-                        delayedOverlayTask(delayInMin = delayInMin, currentAppAndUsageTimeInMin = currentAppAndUsageTimeInMin, savedTimeLimit = savedTimeLimit, isUserInitiatedDelay = true)
+                        delayedOverlayTask(delayInMin = delayInMin.toLong(), currentAppAndUsageTimeInMin = currentAppAndUsageTimeInMin, savedTimeLimit = savedTimeLimit, isUserInitiatedDelay = true)
                         mainScope.launch {
                             (applicationContext as AppMonitorApp).appPrefsRepository.addDelay(currentAppAndUsageTimeInMin.packageName, delayInMin)
                         }

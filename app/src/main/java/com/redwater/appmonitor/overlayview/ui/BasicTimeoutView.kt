@@ -4,6 +4,10 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.Button
 import android.widget.TextView
+import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
+import com.patrykandpatrick.vico.core.axis.AxisPosition
+import com.patrykandpatrick.vico.core.axis.formatter.AxisValueFormatter
+import com.patrykandpatrick.vico.core.axis.horizontal.createHorizontalAxis
 import com.patrykandpatrick.vico.core.chart.addDecorations
 import com.patrykandpatrick.vico.core.chart.column.ColumnChart
 import com.patrykandpatrick.vico.core.chart.decoration.Decoration
@@ -19,6 +23,7 @@ import com.redwater.appmonitor.Constants
 import com.redwater.appmonitor.R
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.overlayview.BaseOverlayView
+import com.redwater.appmonitor.utils.VicoChartUtility
 import org.json.JSONObject
 
 class BasicTimeoutView(context: Context,
@@ -73,20 +78,17 @@ class BasicTimeoutView(context: Context,
     }
 
     fun plotChart(usageDist: Map<Short, Long>, thresholdValue: Short){
-        Logger.d(TAG, "Plotting chart")
-
-//        val chartEntryModel = entryModelOf(usageDist.toSortedMap().map { FloatEntry(it.key.toFloat(),
-//            (it.value/60).toFloat()
-//        ) })
-        val chartEntryModel = usageDist.toSortedMap()
-            .map { (x, y) -> entryOf(x.toFloat(), (y/60).toFloat()) }
-            .let { entryList -> ChartEntryModelProducer(listOf(entryList)) }
-            .getModel()
+        Logger.d(TAG, "Plotting chart with values $usageDist")
+        val entries = VicoChartUtility().getEntriesWithLabel(usageDist = usageDist)
         val chartView = findViewById<ChartView>(R.id.chart_view)
-        chartView.setModel(chartEntryModel)
-
+        chartView.entryProducer = ChartEntryModelProducer(entries.first)
+        val horizontalValueFormatter = AxisValueFormatter<AxisPosition.Horizontal.Bottom> { value, _ ->
+            entries.second[value.toInt()]
+        }
         chartView.chart?.apply {
-            addDecorations(listOf(ThresholdLine(thresholdValue = thresholdValue.toFloat(), thresholdLabel = thresholdValue.toString())))
+            createHorizontalAxis<AxisPosition.Horizontal.Bottom> {
+                valueFormatter = horizontalValueFormatter
+            }
         }
     }
 

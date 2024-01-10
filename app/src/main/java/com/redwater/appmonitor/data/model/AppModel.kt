@@ -23,7 +23,7 @@ data class AppRoomModel(
     var usageTime: Long = 0,
 
     @ColumnInfo(name = Constants.AppPrefsColumns.thresholdTime)
-    val thresholdTime: Short = Short.MAX_VALUE,
+    val thresholdTime: Short? = null,
 
     @ColumnInfo(name = Constants.AppPrefsColumns.delay)
     val delay: Short = 0,
@@ -34,19 +34,19 @@ data class AppModel(
     val packageName: String = "",
     val name: String = "Unknown",
     val isSelected: Boolean = false,
-    var usageTime: Long = 0,
-    val thresholdTime: Short = Short.MAX_VALUE,
-    val icon: ImageBitmap? = null,
+    var usageTimeInMillis: Long = 0,
+    val thresholdTime: Short? = null,
+    val  icon: ImageBitmap? = null,
     var launchCountToday: Int = 0,
-    val usageDistribution: MutableMap<Short, Long> = mutableMapOf(),//in seconds
-    val delay: Short = 0
+    val delay: Short = 0,
+    var session: Session? = null
 )
 
 fun AppModel.toAppRoomModel(): AppRoomModel{
     return AppRoomModel(packageName = this.packageName,
         name = this.name,
         isSelected = this.isSelected,
-        usageTime  = this.usageTime,
+        usageTime  = this.usageTimeInMillis,
         thresholdTime = this.thresholdTime,
         delay = this.delay
     )
@@ -57,7 +57,7 @@ fun AppRoomModel.toAppModel(): AppModel{
         packageName = this.packageName,
         name = this.name,
         isSelected = this.isSelected,
-        usageTime  = this.usageTime,
+        usageTimeInMillis  = this.usageTime,
         thresholdTime = this.thresholdTime,
         icon = null,
         delay = this.delay

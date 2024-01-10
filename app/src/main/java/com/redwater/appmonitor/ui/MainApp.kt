@@ -21,53 +21,55 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.redwater.appmonitor.R
+import com.redwater.appmonitor.data.OnBoardingPreferences
+import com.redwater.appmonitor.data.dataStore
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
+import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.ui.screens.AnalyticsScreen
 import com.redwater.appmonitor.ui.screens.HomeScreen
+import com.redwater.appmonitor.ui.screens.PermissionScreen
 import com.redwater.appmonitor.viewmodel.AnalyticsViewModel
 import com.redwater.appmonitor.viewmodel.MainViewModel
+import com.redwater.appmonitor.viewmodel.PermissionViewModel
 import com.redwater.appmonitor.viewmodel.ViewModelFactory
 
 enum class AppScreens(@StringRes val title: Int, val route: String){
-    HomeScreen(title = R.string.app_name, route = "homeScreen"){
-        override fun getRoute(vararg arg: String): String {
-            return route
-        }
+    HomeScreen(title = R.string.app_name, route = "homeScreen"),
+    Analytics(title = R.string.analytics, route = "analytics/{packageName}"),
+    Permission(title = R.string.permission, route = "permission")
 
-        override fun getScreen(route: String): AppScreens {
-            return this
-        }
-    },
-    Analytics(title = R.string.analytics, route = "analytics/{packageName}"){
-        fun createRoute(packageName: String) = "analytics/$packageName"
-        override fun getRoute(vararg arg: String): String {
-            return "analytics/$arg"
-        }
+}
 
-        override fun getScreen(route: String): AppScreens {
-            return this
-        }
-    };
-    abstract fun getRoute(vararg arg: String): String
-
-    abstract fun getScreen(route: String): AppScreens
+fun getTitle(route: String?): Int {
+    if (route?.contains("homeScreen") == true){
+        return AppScreens.HomeScreen.title
+    }
+    if (route?.contains("analytics") == true){
+        return AppScreens.Analytics.title
+    }
+    if (route?.contains("permission") == true){
+        return AppScreens.Permission.title
+    }
+    return R.string.app_name
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppMonitorAppBar(
-    currentScreen: AppScreens,
+    title: Int,
     canNavigateBack: Boolean,
     navigateUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
-        title = { Text(stringResource(currentScreen.title)) },
+        title = { Text(stringResource(title)) },
         colors = TopAppBarDefaults.mediumTopAppBarColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         ),
@@ -85,20 +87,21 @@ fun AppMonitorAppBar(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainApp(repository: AppUsageStatsRepository,
             navController: NavHostController = rememberNavController(),
+            onBoardingRequired: Int = 0,
             context: Context = LocalContext.current) {
 
     // Get current back stack entry
     val backStackEntry by navController.currentBackStackEntryAsState()
     // Get the name of the current screen
-    val currentScreen = AppScreens().getScreen()
+    val currentScreenTitle = getTitle(backStackEntry?.destination?.route)
+    Logger.d("MainApp", "onBoardingRequired: $onBoardingRequired")
     Scaffold(
         topBar = {
             AppMonitorAppBar(
-                currentScreen = currentScreen,
+                title = currentScreenTitle,
                 canNavigateBack = navController.previousBackStackEntry != null,
                 navigateUp = { navController.navigateUp() }
             )
@@ -106,17 +109,33 @@ fun MainApp(repository: AppUsageStatsRepository,
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = AppScreens.HomeScreen.route,
+            startDestination = if (onBoardingRequired > 0) AppScreens.HomeScreen.route else AppScreens.Permission.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(route = AppScreens.HomeScreen.route){
-                val mainViewModel = viewModel<MainViewModel>(factory = ViewModelFactory(repository) )
-                HomeScreen(mainViewModel = mainViewModel, modifier = Modifier.fillMaxSize(), context = context){packageName: String ->
-                    navController.navigate(AppScreens.Analytics.getRoute(packageName))
+            composable(route = AppScreens.Permission.route){
+                val permissionViewModel = viewModel<PermissionViewModel>()
+                PermissionScreen(permissionViewModel = permissionViewModel){
+                    navController.navigate(route = AppScreens.HomeScreen.route){
+                        popUpTo(route = AppScreens.HomeScreen.route)
+                    }
                 }
             }
-            composable(route = AppScreens.Analytics.route){backStackEntry->
+            composable(route = AppScreens.HomeScreen.route){
+                val mainViewModel = viewModel<MainViewModel>(factory = ViewModelFactory(repository) )
+                HomeScreen(mainViewModel = mainViewModel,
+                    modifier = Modifier.fillMaxSize(), context = context,
+                    onNavigateNext = {packageName: String ->
+                        Logger.d("Main App", "Navigating with $packageName")
+                        navController.navigate(AppScreens.Analytics.route.replace(oldValue = "{packageName}", newValue = packageName))
+                    },
+                    onNavigateToPermissionScreen = {
+                        navController.navigate(AppScreens.Permission.route)
+                    }
+                )
+            }
+            composable(route = AppScreens.Analytics.route, arguments = listOf(navArgument("packageName") { type = NavType.StringType })){ backStackEntry->
                 val packageName = backStackEntry.arguments?.getString("packageName")
+                Logger.d("Main App", "Navigating with $packageName")
                 val analyticsViewModel = viewModel<AnalyticsViewModel>(factory = ViewModelFactory(repository) )
                 AnalyticsScreen(analyticsViewModel = analyticsViewModel, packageName = packageName, modifier = Modifier.fillMaxSize(), context = context)
             }

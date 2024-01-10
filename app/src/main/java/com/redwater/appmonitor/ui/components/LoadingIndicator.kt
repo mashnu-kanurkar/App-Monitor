@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.redwater.appmonitor.R
 
 @Composable
-fun LoadingIndicator(message: String = "Loading data...") {
+fun LoadingIndicator(message: String? = "Loading data...") {
     Box(modifier = Modifier
         .fillMaxSize()
         .background(
@@ -40,7 +40,7 @@ fun LoadingIndicator(message: String = "Loading data...") {
             .background(color = MaterialTheme.colorScheme.surface.copy(alpha = 1.0f)),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically) {
-            Text(modifier = Modifier.padding(8.dp), text = message)
+            Text(modifier = Modifier.padding(8.dp), text = message?:"Loading data...")
             CircularProgressIndicator(
                 modifier = Modifier
                     .size(size = 64.dp)
@@ -50,52 +50,4 @@ fun LoadingIndicator(message: String = "Loading data...") {
             )
         }
     }
-}
-
-@Composable
-fun UsageIndicator() {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier
-            .padding(4.dp)
-            .fillMaxWidth()
-            .clickable(enabled = true, onClick = { }),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ){
-            Image(painter = painterResource(id = R.drawable.ic_launcher_foreground), contentDescription = "")
-            Column(modifier = Modifier
-                .padding(8.dp, 0.dp)
-                .weight(2.0f, true)
-            ) {
-                Text(text = "name", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                Text(text = "packageName", style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface)
-                Text(text = "Usage time: 30 Min", style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface)
-            }
-            RadioButton(selected = true,
-                onClick = {
-                }
-            )
-
-        }
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp, 2.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            LinearProgressIndicator(modifier = Modifier.padding(8.dp, 2.dp).weight(1f), progress = 1f)
-            Text(text = "Limit: 45 Min", style = MaterialTheme.typography.labelSmall)
-        }
-    }
-
-
-}
-
-@Preview
-@Composable
-fun UsageIndicatorPreview() {
-
-    UsageIndicator()
 }

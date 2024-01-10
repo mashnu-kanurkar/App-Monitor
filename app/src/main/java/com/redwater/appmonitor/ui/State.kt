@@ -1,7 +1,9 @@
 package com.redwater.appmonitor.ui
 
 import android.content.Context
+import androidx.compose.ui.graphics.ImageBitmap
 import com.redwater.appmonitor.R
+import com.redwater.appmonitor.data.model.AppModel
 
 
 object PermissionType{
@@ -15,6 +17,10 @@ abstract class PermissionState{
     abstract val type: Int
     abstract var hasPermission: Boolean
     abstract val errorDescription: String
+
+    override fun toString(): String {
+        return "{type=$type, hasPermission=$hasPermission, errorDescription=$errorDescription}"
+    }
 }
 
 class NotificationPermission(val context: Context, override var hasPermission: Boolean = false) : PermissionState() {
@@ -31,3 +37,16 @@ class OverlayPermission(val context: Context, override var hasPermission: Boolea
     override val type: Int = PermissionType.overlayPermission
     override val errorDescription: String = context.resources.getString(R.string.overlay_permission_details)
 }
+data class AnalyticsState(
+    val appModel: AppModel? = null,
+    val longestSessionInMin: Short = 0,
+    val showTimePopUp: Boolean = false,
+    val dataLoadingState: DataLoadingState = DataLoadingState(show = true),
+    val showError: Error = Error(show = false),
+    val permissionPopUpState: PermissionPopUpState = PermissionPopUpState(show = false)
+)
+data class Error(val show: Boolean, val errorMsg: String? = null)
+
+data class PermissionPopUpState(val show: Boolean, val permissionType: Int? = null)
+
+data class DataLoadingState(val show: Boolean, val message: String? = null)

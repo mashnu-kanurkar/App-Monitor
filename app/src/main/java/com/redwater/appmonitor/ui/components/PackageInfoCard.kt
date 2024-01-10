@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -20,46 +23,63 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import com.redwater.appmonitor.logger.Logger
 
 @Composable
 fun PackageInfoCard(
-    icon: ImageBitmap?,
+    modifier: Modifier = Modifier,
+    icon: ImageBitmap,
     name: String,
     packageName: String,
     isSelected: Boolean,
-    index: Int,
-    usageTimeInMin: Short,
+    index: Int = 0,
+    usageTimeInMin: Short = 0,
+    showRadioButton: Boolean = true,                
+    usageIndicator:  (@Composable () -> Unit)? = null,
     onClick: (packageName: String)->Unit,
     onChangePref:(index: Int)-> Unit ) {
     val context = LocalContext.current
-    Row(modifier = Modifier
-        .padding(4.dp)
-        .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-
-        Image(modifier = Modifier
-            .size(48.dp)
-            .padding(4.dp),
-            bitmap = icon?:
-            context.packageManager.getApplicationIcon(context.packageName).toBitmap(48, 48).asImageBitmap(),
-            contentDescription = "app icon")
-        Column(modifier = Modifier
-            .padding(8.dp, 0.dp)
-            .weight(2.0f, true)
-            .clickable(enabled = true, onClick = {onClick.invoke(packageName)})
+    ElevatedCard(modifier = modifier) {
+        Row(modifier = modifier
+            .padding(4.dp)
+            .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-            Text(text = packageName, style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface)
-            Text(text = "Usage time: $usageTimeInMin Min", style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface)
-        }
-        RadioButton(selected = isSelected,
-            onClick = {
-                onChangePref.invoke(index)
+
+            Image(modifier = Modifier
+                .size(48.dp)
+                .padding(4.dp),
+                bitmap = icon,
+                contentDescription = "app icon")
+            Column(modifier = Modifier
+                .padding(8.dp, 0.dp)
+                .weight(2.0f, true)
+                .clickable(enabled = true, onClick = {
+                    Logger.d("PackageInfoCard", "navigating with $packageName")
+                    onClick.invoke(packageName)
+                })
+            ) {
+                Text(text = name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                Text(text = packageName, style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface)
+                Text(text = "Usage time: $usageTimeInMin Min", style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface)
             }
-        )
+            if (showRadioButton){
+//                RadioButton(selected = isSelected,
+//                    onClick = {
+//                        onChangePref.invoke(index)
+//                    }
+//                )
+                SelectionButton(selected = isSelected, onClick = {
+                    onChangePref.invoke(index)
+                })
+            }
+        }
+        if (usageIndicator != null){
+            usageIndicator()
+        }
+        Divider()
     }
 }

@@ -4,18 +4,14 @@ import android.content.Context
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,14 +23,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.redwater.appmonitor.R
+import com.redwater.appmonitor.data.model.AppModel
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.ui.PermissionType
 import com.redwater.appmonitor.ui.components.ErrorDescriptor
@@ -42,17 +41,28 @@ import com.redwater.appmonitor.ui.components.LoadingIndicator
 import com.redwater.appmonitor.ui.components.PackageInfoCard
 import com.redwater.appmonitor.ui.components.PermissionAlertDialog
 import com.redwater.appmonitor.ui.components.TimeSelectionDialog
+import com.redwater.appmonitor.ui.components.UsageIndicator
+import com.redwater.appmonitor.utils.TimeFormatUtility
 import com.redwater.appmonitor.viewmodel.MainViewModel
 
 @Composable
-fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
+fun HomeScreen(modifier: Modifier = Modifier,
+               lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
                mainViewModel: MainViewModel,
-               modifier: Modifier = Modifier,
                context: Context = LocalContext.current,
-               onNavigateNext: (packageName: String)-> Unit
+               onNavigateNext: (packageName: String)-> Unit,
+               onNavigateToPermissionScreen: ()-> Unit,
                ) {
     val TAG = "HomeScreen"
-    val uiState = mainViewModel.uiState
+    var selectedApps = remember {
+        mutableListOf<AppModel>()
+    }
+
+    var unselectedApps = remember {
+        mutableListOf<AppModel>()
+    }
+
+    val uiStateUnselected = mainViewModel.uiStateUnselected
     val uiStateSelected = mainViewModel.uiStateSelected
     val isLoadingData by mainViewModel.isLoadingData
     val permissionState = mainViewModel.permissionStateMap
@@ -80,7 +90,7 @@ fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
             if (event == Lifecycle.Event.ON_START) {
                 Logger.d(TAG, "on start")
                 mainViewModel.getPermissionState(context)
-                if (uiState.isEmpty() && permissionState.get(PermissionType.usagePermission)?.hasPermission == true){
+                if (uiStateUnselected.isEmpty() && permissionState.get(PermissionType.usagePermission)?.hasPermission == true){
                     mainViewModel.getAppUsageTime(context)
                 }else{
                     if (permissionState.get(PermissionType.usagePermission)?.hasPermission == false){
@@ -114,7 +124,6 @@ fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
-
                 permissionState.keys.forEach {permissionType->
                     if (permissionState[permissionType]?.hasPermission == false){
                         permissionState[permissionType]?.errorDescription?.let {
@@ -135,56 +144,53 @@ fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
                     horizontalAlignment = Alignment.Start
                 ){
                     itemsIndexed(uiStateSelected){index, appInfo ->
-                        val usageTime = (appInfo.usageTime/(1000*60))
+                        val usageTime = (appInfo.usageTimeInMillis/(1000*60))
                         PackageInfoCard(
-                            icon = appInfo.icon,
+                            modifier = Modifier.padding(4.dp, 8.dp),
+                            icon = appInfo.icon?:context.packageManager.getApplicationIcon(context.packageName).toBitmap(48, 48).asImageBitmap(),
                             name = appInfo.name,
                             packageName = appInfo.packageName,
                             isSelected = appInfo.isSelected,
                             index = index,
                             usageTimeInMin = usageTime.toShort(),
-                            onClick = {packageName -> onNavigateNext.invoke(packageName)}
-                        ) { index ->
-                            mainViewModel.onAppUnSelected(index = index, context = context.applicationContext)
-                        }
-
-                        val usageIndicatorValue = usageTime.toFloat()/appInfo.thresholdTime.toFloat()
-                        val usagePercentage = if (usageIndicatorValue < 1.0 ) usageIndicatorValue else 1.0
-                        Row(modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp, 2.dp),
-                            horizontalArrangement = Arrangement.SpaceAround,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            LinearProgressIndicator(modifier = Modifier
-                                .padding(8.dp, 2.dp)
-                                .weight(1f), progress = usagePercentage.toFloat())
-                            Text(text = "Limit: ${appInfo.thresholdTime}", style = MaterialTheme.typography.labelSmall)
+                            usageIndicator = {
+                                UsageIndicator(usageTimeInMin = usageTime.toFloat(), thresholdTimeInMin = appInfo.thresholdTime?.toFloat())
+                            },
+                            onClick = {packageName ->
+                                Logger.d(TAG, "Navigating with $packageName" )
+                                onNavigateNext.invoke(packageName)
+                            }
+                        ) { cardIndex ->
+                            mainViewModel.onAppUnSelected(index = cardIndex)
                         }
                     }
-                    itemsIndexed(uiState){index, appInfo ->
-
+                    itemsIndexed(uiStateUnselected){ index, appInfo ->
                         PackageInfoCard(
-                            icon = appInfo.icon,
+                            modifier = Modifier.padding(4.dp, 8.dp),
+                            icon = appInfo.icon?:context.packageManager.getApplicationIcon(context.packageName).toBitmap(48, 48).asImageBitmap(),
                             name = appInfo.name,
                             packageName = appInfo.packageName,
                             isSelected = appInfo.isSelected,
                             index = index,
-                            usageTimeInMin = (appInfo.usageTime/(1000*60)).toShort(),
-                            onClick = {packageName -> onNavigateNext.invoke(packageName)}
-                        ) {index ->
+                            usageTimeInMin = (appInfo.usageTimeInMillis/(1000*60)).toShort(),
+                            onClick = {packageName ->
+                                Logger.d(TAG, "Navigating with $packageName" )
+                                onNavigateNext.invoke(packageName)}
+                        ) {cardIndex ->
                             if (permissionState.get(PermissionType.overlayPermission)?.hasPermission == false){
                                 permissionPopUpType = PermissionType.overlayPermission
                                 showPermissionPopUp = true
                                 return@PackageInfoCard
                             }
                             if (permissionState.get(PermissionType.notificationPermission)?.hasPermission == false){
-                                permissionPopUpType = PermissionType.notificationPermission
-                                showPermissionPopUp = true
+                                //permissionPopUpType = PermissionType.notificationPermission
+                                //showPermissionPopUp = true
+                                onNavigateToPermissionScreen.invoke()
                                 return@PackageInfoCard
                             }
                             //ShowPopForTimeLimit
-                            showTimePopUpForApp = index
+                            showTimePopUpForApp = cardIndex
+
                         }
                     }
                 }
@@ -219,8 +225,8 @@ fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
             }
 
             if (showTimePopUpForApp != null){
-                val timeList = listOf<String>("15 Min", "30 Min", "45 Min", "1 Hr", "2 Hrs", "3 Hrs")
-                val appName = uiState[showTimePopUpForApp!!].name
+                val timeList = TimeFormatUtility().thresholdTimeStringList
+                val appName = uiStateUnselected[showTimePopUpForApp!!].name
                 val descriptionWithAppName = stringResource(id = R.string.threshold_time_description).replace(oldValue = "##app_name##", newValue = appName)
                 TimeSelectionDialog(title = stringResource(id = R.string.threshold_time_title),
                     description = descriptionWithAppName,
@@ -228,8 +234,7 @@ fun HomeScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
                     onSelection = {
                         mainViewModel.onAppSelected(
                             index = showTimePopUpForApp!!,
-                            thresholdTimeInString = timeList[it],
-                            context = context.applicationContext)
+                            thresholdTimeInString = timeList[it],)
                         showTimePopUpForApp = null
                     }) {
                     showTimePopUpForApp = null
