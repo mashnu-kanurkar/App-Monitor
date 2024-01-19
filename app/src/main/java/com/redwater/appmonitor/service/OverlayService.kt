@@ -9,6 +9,7 @@ import android.content.IntentFilter
 import android.os.IBinder
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.mutableStateOf
 import com.redwater.appmonitor.AppMonitorApp
 import com.redwater.appmonitor.data.model.AppDataFromSystem
 import com.redwater.appmonitor.data.model.AppModel
@@ -30,7 +31,8 @@ import kotlinx.coroutines.launch
 
 class OverlayService : Service() {
     companion object{
-        var isRunning = false
+        var isRunning = mutableStateOf(false)
+
         private const val NOTIFICATION_ID_APP_MONITOR_SERVICE: Int = 1
     }
     private val TAG = this::class.simpleName
@@ -42,6 +44,7 @@ class OverlayService : Service() {
     private lateinit var serviceScope: CoroutineScope
     private lateinit var foregroundTimeMonitorScope: CoroutineScope
     private var lastForegroundPackage = ""
+    private var lastBackgroundPackage = ""
 
     private var screenOnOffReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -71,7 +74,7 @@ class OverlayService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Logger.d(TAG, "Starting service with command")
-        isRunning = true
+        isRunning.value = true
         observeForegroundApplication()
         return START_STICKY
     }
@@ -99,7 +102,7 @@ class OverlayService : Service() {
                             onAppForeground(foregroundAppPackage = it.packageName, prefsRepository = prefsRepo)
                         }
                         UsageEvents.Event.ACTIVITY_STOPPED ->{
-                            onAppOnBackground()
+                            onAppOnBackground(backgroundAppPackage= it.packageName)
                         }
                     }
                 }
@@ -107,14 +110,25 @@ class OverlayService : Service() {
         }
     }
 
-    private fun onAppOnBackground(){
+    private fun onAppOnBackground(backgroundAppPackage: String){
+        Logger.d(TAG, "updating last background app")
+        lastBackgroundPackage = backgroundAppPackage
+    }
+
+    private fun terminateForegroundTimeMonitor(){
         if (this::foregroundTimeMonitorScope.isInitialized){
+            Logger.d(TAG, "canceling foregroundTimeMonitor scope")
             foregroundTimeMonitorScope.cancel()
         }
     }
     private suspend fun onAppForeground(foregroundAppPackage: String, prefsRepository: AppUsageStatsRepository) {
         Logger.d(TAG, "onAppForeground $foregroundAppPackage")
+
         if (foregroundAppPackage != lastForegroundPackage){
+            if (lastBackgroundPackage != foregroundAppPackage){
+                Logger.d(TAG, "trying to cancel foregroundTimeMonitor scope")
+                terminateForegroundTimeMonitor()
+            }
             //try to hide previous overlay, if any
             hideOverlay()
             lastForegroundPackage = foregroundAppPackage
@@ -128,9 +142,9 @@ class OverlayService : Service() {
                 Logger.d(TAG, "threshold time  $savedTimeLimit + delay $userInitiatedDelay vs app usage time  ${currentAppAndUsageTimeInMin?.usageTime}")
                 currentAppAndUsageTimeInMin?.let {
                     if (it.usageTime >= (savedTimeLimit + userInitiatedDelay)){
-                        showOverlay(it, savedTimeLimit)
+                        showOverlay(it, savedTimeLimit, withDelayInMin = userInitiatedDelay)
                     }else{
-                        delayedOverlayTask(delayInMin = ((savedTimeLimit + userInitiatedDelay) - it.usageTime).toLong(), currentAppAndUsageTimeInMin = it, savedTimeLimit = savedTimeLimit)
+                        delayedOverlayTask(delayInMin = ((savedTimeLimit + userInitiatedDelay) - it.usageTime).toLong(), currentAppAndUsageTimeInMin = it, savedTimeLimit = savedTimeLimit, isUserInitiatedDelay = userInitiatedDelay > 0)
                     }
                 }
 
@@ -217,8 +231,9 @@ class OverlayService : Service() {
         overlayParams = OverlayViewLayoutParams.get()
         mainScope.launch {
             Logger.d(TAG, "Showing overlay")
+            val isDelayOptionAvailable = withDelayInMin <= 0
             val limitString = if (withDelayInMin > 0) "$savedTimeLimit + $withDelayInMin" else "$savedTimeLimit"
-            val basicTimeoutViewData = "{\"limit\":\"$limitString\",\"usage\":\"${currentAppAndUsageTimeInMin.usageTime}\"}"
+            val basicTimeoutViewData = "{\"limit\":\"$limitString\",\"usage\":\"${currentAppAndUsageTimeInMin.usageTime}\",\"isDelayOptionAvbl\":\"$isDelayOptionAvailable\"}"
 //            val overlayDataRepository = (applicationContext as AppMonitorApp).overlayDataRepository
 //            var overlayPayload = overlayDataRepository.getRandomOverlayPayload()
 //            Logger.d(TAG, "overlayPayload: $overlayPayload")
@@ -282,7 +297,7 @@ class OverlayService : Service() {
         try {
             unregisterScreenReceiver()
             stopForegroundApplicationObserver()
-            isRunning = false
+            isRunning.value = false
             if (overlayView?.isAttachedToWindow == true){
                 windowManager?.removeView(overlayView)
             }

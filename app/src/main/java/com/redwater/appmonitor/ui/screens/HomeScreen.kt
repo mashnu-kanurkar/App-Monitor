@@ -147,7 +147,7 @@ fun HomeScreen(modifier: Modifier = Modifier,
                         val usageTime = (appInfo.usageTimeInMillis/(1000*60))
                         PackageInfoCard(
                             modifier = Modifier.padding(4.dp, 8.dp),
-                            icon = appInfo.icon?:context.packageManager.getApplicationIcon(context.packageName).toBitmap(48, 48).asImageBitmap(),
+                            icon = appInfo.icon?:context.applicationContext.packageManager.getApplicationIcon(context.applicationContext.packageName).toBitmap(48, 48).asImageBitmap(),
                             name = appInfo.name,
                             packageName = appInfo.packageName,
                             isSelected = appInfo.isSelected,
@@ -167,7 +167,7 @@ fun HomeScreen(modifier: Modifier = Modifier,
                     itemsIndexed(uiStateUnselected){ index, appInfo ->
                         PackageInfoCard(
                             modifier = Modifier.padding(4.dp, 8.dp),
-                            icon = appInfo.icon?:context.packageManager.getApplicationIcon(context.packageName).toBitmap(48, 48).asImageBitmap(),
+                            icon = appInfo.icon?:context.applicationContext.packageManager.getApplicationIcon(context.applicationContext.packageName).toBitmap(48, 48).asImageBitmap(),
                             name = appInfo.name,
                             packageName = appInfo.packageName,
                             isSelected = appInfo.isSelected,

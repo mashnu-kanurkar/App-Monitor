@@ -11,7 +11,6 @@ import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.permissions.PermissionManager
 import com.redwater.appmonitor.service.OverlayService
-import com.redwater.appmonitor.service.ServiceManager
 import com.redwater.appmonitor.ui.PermissionState
 import com.redwater.appmonitor.ui.PermissionType
 import com.redwater.appmonitor.utils.TimeFormatUtility
@@ -36,28 +35,10 @@ class MainViewModel(private val preferenceRepository: AppUsageStatsRepository,):
     private val permissionManager = PermissionManager()
     private val TAG = this::class.simpleName
 
-    var isServiceRunning = mutableStateOf(OverlayService.isRunning)
+    var isServiceRunning = OverlayService.isRunning
         private set
 
     private var allAppUsageMap = mutableMapOf<String, AppModel>()
-
-    private fun startService(context: Context){
-        if (OverlayService.isRunning.not()){
-            viewModelScope.launch {
-                ServiceManager.startService(context = context)
-                //isServiceRunning.value = true
-            }
-        }
-    }
-
-    private fun stopService(context: Context){
-        viewModelScope.launch {
-            if (OverlayService.isRunning){
-                ServiceManager.stopService(context = context, repository = preferenceRepository)
-                //isServiceRunning.value = false
-            }
-        }
-    }
 
     fun getPermissionState(context: Context){
         permissionStateMap.putAll(permissionManager.getPermissionState(context = context))
@@ -77,7 +58,7 @@ class MainViewModel(private val preferenceRepository: AppUsageStatsRepository,):
         viewModelScope.launch {
             withContext(Dispatchers.Default){
                 try{
-                    allAppUsageMap = preferenceRepository.getAppModelData(context = context)
+                    allAppUsageMap = preferenceRepository.getAppModelData(context = context.applicationContext)
                     //This works only for newly added entries. In case we delete any entry, we need to manually remove them at onAppUnSelected()
                     preferenceRepository.getAllRecordsFlow().collectLatest { savedAppList->
                         Logger.d(TAG, "collected app list $savedAppList")
@@ -88,26 +69,18 @@ class MainViewModel(private val preferenceRepository: AppUsageStatsRepository,):
                                 }
                             }
                         }
-                        Logger.d(TAG, "QA-1: allMap ${allAppUsageMap.entries}")
                         val partition = allAppUsageMap.values.partition { it.isSelected }
-                        Logger.d(TAG, "QA-1: partition1 ${partition.first.toList()}")
-                        Logger.d(TAG, "QA-1: partition2 ${partition.second.toList()}")
-                        Logger.d(TAG, "QA-1: selected ${uiStateSelected.toList()}")
-                        Logger.d(TAG, "QA-1: other ${uiStateUnselected.toList()}")
+
                         if (uiStateSelected.isEmpty().not()){
                             uiStateSelected.clear()
-                            Logger.d(TAG, "QA-2: selected ${uiStateSelected.toList()}")
                         }
                         uiStateSelected.addAll(partition.first)
 
                         if (uiStateUnselected.isEmpty().not()){
                             uiStateUnselected.clear()
-                            Logger.d(TAG, "QA-2: other ${uiStateUnselected.toList()}")
                         }
 
                         uiStateUnselected.addAll(partition.second)
-                        Logger.d(TAG, "QA-3: selected ${uiStateSelected.toList()}")
-                        Logger.d(TAG, "QA-3: other ${uiStateUnselected.toList()}")
                         uiStateSelected.sortWith(compareBy { it.usageTimeInMillis })
                         uiStateUnselected.sortWith(compareBy { it.name })
                         isLoadingData.value = false

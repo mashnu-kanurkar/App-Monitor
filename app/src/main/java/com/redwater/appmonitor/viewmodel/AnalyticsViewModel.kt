@@ -29,6 +29,7 @@ class AnalyticsViewModel(private val repository: AppUsageStatsRepository): ViewM
     var analyticsState: MutableState<AnalyticsState> = mutableStateOf(AnalyticsState())
         private set
 
+
     fun getPackageInfo(packageName: String,context: Context){
 
         Logger.d(TAG, "getting app usage")
@@ -44,7 +45,7 @@ class AnalyticsViewModel(private val repository: AppUsageStatsRepository): ViewM
             Logger.d(TAG, "changing loader state to true")
             analyticsState.value = analyticsState.value.copy(dataLoadingState = DataLoadingState(show = true, message = "Analysing data"))
             Logger.d(TAG, "changed loader state true")
-            var appUsage = repository.getAppModelData(packageName = packageName, context = context, enableSessionData = true)[packageName]
+            var appUsage = repository.getAppModelData(packageName = packageName, context = context.applicationContext, enableSessionData = true)[packageName]
             Logger.d(TAG, "app model for $packageName : $appUsage")
             repository.getSavedPrefsFor(packageName = packageName).collectLatest {
                 Logger.d(TAG, "collected app data: $it")

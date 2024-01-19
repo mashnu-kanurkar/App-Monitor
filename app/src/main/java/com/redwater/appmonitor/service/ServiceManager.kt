@@ -22,7 +22,7 @@ object ServiceManager {
     fun startService(context: Context, intent: Intent = Intent(context, OverlayService::class.java)) {
         Logger.d(TAG, "starting service")
 
-        if (OverlayService.isRunning.not()){
+        if (OverlayService.isRunning.value.not()){
             val hasSavedAppRecords = true
             if (hasSavedAppRecords) {
                 val permissionManager = PermissionManager()
@@ -46,7 +46,7 @@ object ServiceManager {
         }
     }
 
-    suspend fun stopService(context: Context, intent: Intent = Intent(context, OverlayService::class.java), repository: AppUsageStatsRepository){
+    private suspend fun stopService(context: Context, intent: Intent = Intent(context, OverlayService::class.java), repository: AppUsageStatsRepository){
         if (repository.getAllSelectedRecords().isEmpty()){
             Logger.d(TAG, "stopping service")
             context.stopService(intent)

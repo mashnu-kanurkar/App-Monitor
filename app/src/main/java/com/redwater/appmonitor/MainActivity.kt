@@ -18,6 +18,8 @@ import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.service.ServiceManager
 import com.redwater.appmonitor.ui.MainApp
 import com.redwater.appmonitor.ui.theme.AppMonitorTheme
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
@@ -28,6 +30,7 @@ class MainActivity : ComponentActivity() {
     private val TAG = this::class.simpleName
     private lateinit var repository: AppUsageStatsRepository
     private var isOnBoardingCompleted: Int = -1
+    private lateinit var onboardingPrefsCollector: Job
     override fun onCreate(savedInstanceState: Bundle?) {
         // Handle the splash screen transition.
         installSplashScreen()
@@ -53,8 +56,8 @@ class MainActivity : ComponentActivity() {
         }
         repository = (application as AppMonitorApp).appPrefsRepository
 
-        lifecycleScope.launch {
-            OnBoardingPreferences(context = applicationContext).onboardingCompletedFlow.collectLatest {
+        onboardingPrefsCollector = lifecycleScope.launch {
+            OnBoardingPreferences(context = this@MainActivity).onboardingCompletedFlow.collectLatest {
                 Logger.d(TAG, "fetched onboarding prefs $it")
                 isOnBoardingCompleted = it
             }
@@ -92,5 +95,10 @@ class MainActivity : ComponentActivity() {
                 ServiceManager.toggleService(context = applicationContext, repository = repository)
             }
         }
+    }
+
+    override fun onDestroy() {
+        onboardingPrefsCollector.cancel()
+        super.onDestroy()
     }
 }

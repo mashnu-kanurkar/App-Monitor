@@ -116,7 +116,10 @@ fun MainApp(repository: AppUsageStatsRepository,
                 val permissionViewModel = viewModel<PermissionViewModel>()
                 PermissionScreen(permissionViewModel = permissionViewModel){
                     navController.navigate(route = AppScreens.HomeScreen.route){
-                        popUpTo(route = AppScreens.HomeScreen.route)
+                        popUpTo(navController.graph.id){
+                            inclusive = true
+                        }
+
                     }
                 }
             }

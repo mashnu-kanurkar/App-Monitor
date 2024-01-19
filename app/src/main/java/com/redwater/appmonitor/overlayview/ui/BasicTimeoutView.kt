@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.Button
 import android.widget.TextView
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
 import com.patrykandpatrick.vico.core.axis.AxisPosition
 import com.patrykandpatrick.vico.core.axis.formatter.AxisValueFormatter
@@ -57,6 +59,7 @@ class BasicTimeoutView(context: Context,
         Logger.d(TAG, "overlay data $data")
         val limit = data.getString("limit")
         val usage = data.getString("usage")
+        val isDelayOptionAvailable = data.getString("isDelayOptionAvbl").toBoolean()
         val limitText = findViewById<TextView>(R.id.text_set_limit)
         val usageText = findViewById<TextView>(R.id.text_total_usage)
 
@@ -68,10 +71,16 @@ class BasicTimeoutView(context: Context,
         }
 
         findViewById<Button>(R.id.button_delay).apply {
-            text = text.toString().replace("##delayMin##", "10")
-            setOnClickListener {
-            mOverlayViewActionListener?.onDismissOverlayAction(delayInMin = 10)
-        }
+            if (isDelayOptionAvailable.not()){
+                isEnabled = false
+                text = "Delay not available"
+            }else{
+                text = text.toString().replace("##delayMin##", "10")
+                setOnClickListener {
+                    mOverlayViewActionListener?.onDismissOverlayAction(delayInMin = 10)
+                }
+            }
+
         }
 
 
