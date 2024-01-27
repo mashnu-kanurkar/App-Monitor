@@ -11,6 +11,7 @@ object PermissionType{
     const val usagePermission = 1
     const val overlayPermission = 2
     const val notificationPermission = 3
+
 }
 
 abstract class PermissionState{

@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.redwater.appmonitor.data.model.AppModel
+import com.redwater.appmonitor.data.model.TimeModel
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.permissions.PermissionManager
@@ -101,20 +102,37 @@ class MainViewModel(private val preferenceRepository: AppUsageStatsRepository,):
             preferenceRepository.insertPrefsFor(AppModel(packageName = appInfo.packageName,
                 name = appInfo.name,
                 isSelected = true,
-                thresholdTime = thresholdTimeInMin.toShort()))
+                thresholdTime = thresholdTimeInMin))
+        }
+    }
+
+    fun onAppSelected(index: Int, timeModel: TimeModel){
+        viewModelScope.launch {
+            val thresholdTimeInMin: Short = TimeFormatUtility().getTimeInMin(timeModel = timeModel)
+            val appInfo =  uiStateUnselected[index].copy(isSelected = true, thresholdTime = thresholdTimeInMin)
+            preferenceRepository.insertPrefsFor(AppModel(packageName = appInfo.packageName,
+                name = appInfo.name,
+                isSelected = true,
+                thresholdTime = thresholdTimeInMin))
         }
     }
 
     //when selected app is unselected
     fun onAppUnSelected(index: Int){
         val appInfo =  uiStateSelected[index].copy(isSelected = false)
-        allAppUsageMap.remove(appInfo.packageName)
+        allAppUsageMap.put(appInfo.packageName, appInfo)
+        //allAppUsageMap.remove(appInfo.packageName)
 //        uiStateSelected.removeAt(index)
 //        uiStateUnselected.add(appInfo)
         viewModelScope.launch {
             preferenceRepository.unselectPrefsFor(appInfo.packageName)
         }
-        uiStateUnselected.sortWith(compareByDescending { it.name })
+        val tempList = uiStateUnselected.toList()
+        tempList.apply {
+            sortedWith(compareByDescending { it.name })
+        }
+        uiStateUnselected.clear()
+        uiStateUnselected.addAll(tempList)
     }
 }
 

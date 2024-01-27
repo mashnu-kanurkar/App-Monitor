@@ -62,8 +62,12 @@ fun HomeScreen(modifier: Modifier = Modifier,
         mutableListOf<AppModel>()
     }
 
-    val uiStateUnselected = mainViewModel.uiStateUnselected
-    val uiStateSelected = mainViewModel.uiStateSelected
+    val uiStateUnselected = remember {
+        mainViewModel.uiStateUnselected
+    }
+    val uiStateSelected = remember {
+        mainViewModel.uiStateSelected
+    }
     val isLoadingData by mainViewModel.isLoadingData
     val permissionState = mainViewModel.permissionStateMap
 
@@ -111,11 +115,12 @@ fun HomeScreen(modifier: Modifier = Modifier,
             Column() {
                 Box(modifier = Modifier
                     .fillMaxWidth()
-                    .padding(0.dp, 8.dp)
+                    //.padding(0.dp, 8.dp)
                     .background(
                         color = if (isServiceRunning) Color.Green else Color.Red
                     ),
                 ){
+
                     Text(modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp, 0.dp),
@@ -143,7 +148,7 @@ fun HomeScreen(modifier: Modifier = Modifier,
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.Start
                 ){
-                    itemsIndexed(uiStateSelected){index, appInfo ->
+                    itemsIndexed( items = uiStateSelected){index, appInfo ->
                         val usageTime = (appInfo.usageTimeInMillis/(1000*60))
                         PackageInfoCard(
                             modifier = Modifier.padding(4.dp, 8.dp),
@@ -234,7 +239,7 @@ fun HomeScreen(modifier: Modifier = Modifier,
                     onSelection = {
                         mainViewModel.onAppSelected(
                             index = showTimePopUpForApp!!,
-                            thresholdTimeInString = timeList[it],)
+                            timeModel = it,)
                         showTimePopUpForApp = null
                     }) {
                     showTimePopUpForApp = null

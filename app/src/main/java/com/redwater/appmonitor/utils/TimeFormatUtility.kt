@@ -1,5 +1,6 @@
 package com.redwater.appmonitor.utils
 
+import com.redwater.appmonitor.data.model.TimeModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
@@ -18,6 +19,16 @@ class TimeFormatUtility{
             e.printStackTrace()
         }
         return thresholdTimeInMin
+    }
+
+    fun getTimeInMin(timeModel: TimeModel): Short{
+        return try {
+            val min = (timeModel.hour * 60)+timeModel.minute
+            min.toShort()
+        }catch (e: Exception){
+            e.printStackTrace()
+            (24*60).toShort()
+        }
     }
 
     fun getDateTimeFromEpoch(timestamp: Long, format: String = "dd-MM-yyyy hh:mm:ss"): String{

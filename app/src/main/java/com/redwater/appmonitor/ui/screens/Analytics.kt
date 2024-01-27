@@ -5,11 +5,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -43,9 +46,8 @@ import com.redwater.appmonitor.utils.VicoChartUtility
 import com.redwater.appmonitor.viewmodel.AnalyticsViewModel
 import com.patrykandpatrick.vico.compose.axis.vertical.*
 import com.patrykandpatrick.vico.compose.chart.column.columnChart
+import com.patrykandpatrick.vico.compose.chart.line.lineChart
 import com.patrykandpatrick.vico.compose.chart.scroll.rememberChartScrollSpec
-import com.patrykandpatrick.vico.core.axis.AxisPosition
-import com.patrykandpatrick.vico.core.axis.formatter.AxisValueFormatter
 import com.patrykandpatrick.vico.core.entry.ChartEntryModel
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.scroll.InitialScroll
@@ -62,6 +64,7 @@ fun AnalyticsScreen(
 
     val TAG = "AnalyticsScreen"
     val uiState by analyticsViewModel.analyticsState
+    val monthlyStats = analyticsViewModel.monthlyStats
     val permissionStateMap = analyticsViewModel.permissionStateMap
     val vicoUtility = remember {
         VicoChartUtility()
@@ -76,6 +79,7 @@ fun AnalyticsScreen(
                 analyticsViewModel.getPermissionState(context = context)
                 packageName?.let {
                     analyticsViewModel.getPackageInfo(packageName = packageName, context = context)
+                    analyticsViewModel.getMonthlyStats(packageName = packageName, context = context)
                 }
             }
         }
@@ -105,8 +109,9 @@ fun AnalyticsScreen(
             Column(modifier = modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.Top) {
                 if (uiState.appModel != null) {
                     val usageTimeInMin = (uiState.appModel!!.usageTimeInMillis / (60 * 1000)).toShort()
-                    val entries = vicoUtility.getEntriesWithLabel(uiState.appModel!!.session?.hourlyDistributionInMillis()?: mutableMapOf())
+                    val sessionEntries = vicoUtility.getEntriesWithLabel(uiState.appModel!!.session?.hourlyDistributionInMillis()?: mutableMapOf())
                     // val entries = vicoUtility.getEntriesWithLabel(uiState.appModel!!.usageDistribution)
+                    val monthlyStatsEntries = vicoUtility.getMonthlyEntriesWithLabel(monthlyStatsList = monthlyStats)
                     val chartScrollSpec = rememberChartScrollSpec<ChartEntryModel>(initialScroll = InitialScroll.End)
                     PackageInfoCard(
                         modifier = Modifier.padding(4.dp, 8.dp),
@@ -132,19 +137,53 @@ fun AnalyticsScreen(
                     )
                     CombinedStatsCard(modifier = Modifier.padding(4.dp, 8.dp), todayUsageInMin = usageTimeInMin, launchCount = uiState.appModel!!.session?.sessionList?.size?: 0, longestSessionTimeInSec = (uiState.appModel!!.session?.maxOrNull()?.sessionLength?:0)/1000, thresholdTimeInMin = uiState.appModel!!.thresholdTime)
 
-                    if (entries.first.isEmpty().not()){
-                        Chart(
-                            chart = columnChart(),
-                            chartModelProducer = ChartEntryModelProducer(entries.first),
-                            startAxis = startAxis(),
-                            bottomAxis = bottomAxis(valueFormatter = { value, _ ->
-                                entries.second[value.toInt()]
-                            }),
-                            chartScrollSpec = chartScrollSpec,
+                    Divider(modifier = Modifier
+                        .height(1.dp)
+                        .fillMaxWidth())
+                    if (sessionEntries.first.isEmpty().not()){
+                        ElevatedCard(modifier = Modifier.padding(4.dp, 8.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 16.dp)) {
+                            Text(modifier = Modifier
+                                .padding(8.dp, 8.dp), text = stringResource(id = R.string.today_usage_trend), style = MaterialTheme.typography.titleLarge)
+                            Chart(modifier = Modifier.padding(8.dp),
+                                chart = columnChart(),
+                                chartModelProducer = ChartEntryModelProducer(sessionEntries.first),
+                                startAxis = startAxis(),
+                                bottomAxis = bottomAxis(valueFormatter = { value, _ ->
+                                    sessionEntries.second[value.toInt()]
+                                }),
+                                chartScrollSpec = chartScrollSpec,
 
-                            )
+                                )
+                        }
                     }
+                    Divider(modifier = Modifier
+                        .height(1.dp)
+                        .fillMaxWidth())
+                    if (monthlyStatsEntries.first.isEmpty().not()){
+                        ElevatedCard(modifier = Modifier.padding(4.dp, 8.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 16.dp)) {
+                            Text(modifier = Modifier
+                                .padding(8.dp, 8.dp), text = stringResource(id = R.string.history_usage_trend), style = MaterialTheme.typography.titleLarge)
+                            Chart(modifier = Modifier.padding(8.dp),
+                                chart = lineChart(),
+                                chartModelProducer = ChartEntryModelProducer(monthlyStatsEntries.first),
+                                startAxis = startAxis(),
+                                bottomAxis = bottomAxis(valueFormatter = { value, _ ->
+                                    monthlyStatsEntries.second[value.toInt()]
+                                }),
+                                chartScrollSpec = chartScrollSpec,
+
+                                )
+                        }
+                    }
+                    Divider(modifier = Modifier
+                        .height(1.dp)
+                        .fillMaxWidth())
                     SessionDataCard(sessionData = uiState.appModel!!.session, format = "hh:mm:ss aa")
+
                 } else {
                     if (uiState.dataLoadingState.show.not()){
                         ElevatedCard(
@@ -173,9 +212,10 @@ fun AnalyticsScreen(
                     description = descriptionWithAppName,
                     timeList = timeList,
                     onSelection = {
+                        Logger.d(TAG, "Selected time $it")
                         analyticsViewModel.onTimeSelection(
                             isDismiss = false,
-                            thresholdTimeInString = timeList[it],
+                            timeModel = it,
                             context = context.applicationContext,
                             packageName = packageName
                         )

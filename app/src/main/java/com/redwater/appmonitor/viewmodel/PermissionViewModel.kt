@@ -4,16 +4,13 @@ import android.content.Context
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.redwater.appmonitor.data.OnBoardingPreferences
+import com.redwater.appmonitor.data.UserPreferences
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.permissions.PermissionManager
 import com.redwater.appmonitor.ui.PermissionState
-import com.redwater.appmonitor.ui.PermissionType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class PermissionViewModel: ViewModel() {
@@ -40,7 +37,7 @@ class PermissionViewModel: ViewModel() {
 
     fun updateOnboardingPreference(context: Context){
         viewModelScope.launch {
-            OnBoardingPreferences(context = context).updateOnBoardingPreference(isCompleted = 1)
+            UserPreferences(context = context).updateOnBoardingPreference(isCompleted = 1)
         }
     }
 

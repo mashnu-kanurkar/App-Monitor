@@ -17,6 +17,10 @@
     <string name="notification_permission_title">Notification Permission required</string>
     <string name="notification_permission_description">Please enable notification permissions to use app monitor</string>
     <string name="permission_required_title">Permission required</string>
+    <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="privacy_policy_description">In order to personalise your experience and for analytical purpose to improve the app, we collect some personal information. \n\nYour privacy is important to us and privacy policy details how we use and protect your information. \n\nBy accepting this, you agree to the terms in our privacy policy.</string>
+    <string name="privacy_policy_url_holder">Read ##privacy_policy##</string>
+    <string name="privacy_policy_url">https://www.freeprivacypolicy.com/live/53699ba9–d108–4b57-a71b-21961c539fe1</string>
     <string name="usage_data_permission_details">To monitor your app usage, we need permission to access data usage. We never share this information to any third party organisations.</string>
     <string name="overlay_permission_details">We need overlay permission to show a prompt when you exceeds the daily app usage time.</string>
     <string name="threshold_time_title">Select the threshold time</string>
@@ -40,6 +44,9 @@
     <string name="button_no">No</string>
     <string name="button_skip">Skip</string>
     <string name="button_allow">Allow</string>
+    <string name="button_accept">I Accept</string>
+    <string name="today_usage_trend">Today\'s usage trend</string>
+    <string name="history_usage_trend">Historical usage trend</string>
     
 <!--    Stats card-->
     <string name="today_usage_title">Today\'s usage</string>

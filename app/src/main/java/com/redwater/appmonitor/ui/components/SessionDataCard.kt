@@ -33,17 +33,11 @@ fun SessionDataCard(modifier: Modifier = Modifier, sessionData: Session?, format
     val timeUtility = TimeFormatUtility()
     Logger.d("Session", "${sessionData?.sessionList}")
     ElevatedCard(modifier = modifier, shape = RoundedCornerShape(8.dp,)) {
-//        SessionCard(id = stringResource(id = R.string.session_id),
-//            length = stringResource(id = R.string.session_length),
-//            textStyle = MaterialTheme.typography.titleLarge)
-//        Divider(
-//            color = Color.Black,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .height(1.dp)
-//        )
-        Text(modifier = Modifier
-            .padding(8.dp, 8.dp), text = stringResource(id = R.string.session_length), style = MaterialTheme.typography.titleLarge)
+        if (sessionData != null && sessionData.sessionList.isNotEmpty() ){
+            Text(modifier = Modifier
+                .padding(8.dp, 8.dp), text = stringResource(id = R.string.session_length), style = MaterialTheme.typography.titleLarge)
+        }
+
         sessionData?.sessionList?.forEach {
             val sessionId = timeUtility.getDateTimeFromEpoch(timestamp = it.sessionId, format= format)
             val length = timeUtility.getTimeWithSecString(timeInSec = it.sessionLength/1000)

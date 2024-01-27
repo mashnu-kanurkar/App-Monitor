@@ -3,6 +3,7 @@ package com.redwater.appmonitor.ui.screens
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -120,11 +121,12 @@ fun NotificationPermissionContent(onClickAllow: ()-> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(8.dp, 0.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(modifier = Modifier.padding(4.dp, 16.dp),painter = painterResource(id = R.drawable.icon_bell), contentDescription = "bell")
+        Image(modifier = Modifier.padding(4.dp, 16.dp),painter = painterResource(id = R.drawable.bell_0), contentDescription = "bell")
         Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.notification_permission_title), style = MaterialTheme.typography.titleLarge)
         Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.notification_permission_description))
         Spacer(modifier = Modifier.height(48.dp))
@@ -140,11 +142,12 @@ fun UsageMonitorPermissionContent(onClickAllow: ()-> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(8.dp, 0.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(modifier = Modifier.padding(4.dp, 16.dp),painter = painterResource(id = R.drawable.monitoring), contentDescription = "bell")
+        Image(modifier = Modifier.padding(4.dp, 16.dp),painter = painterResource(id = R.drawable.analytics_0), contentDescription = "bell")
         Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.permission_required_title), style = MaterialTheme.typography.titleLarge)
         Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.usage_data_permission_details))
         Spacer(modifier = Modifier.height(48.dp))
@@ -159,13 +162,14 @@ fun OverlayPermissionContent(onClickAllow: ()-> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(8.dp, 0.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(modifier = Modifier.padding(4.dp, 16.dp),painter = painterResource(id = R.drawable.layers), contentDescription = "bell")
+        Image(modifier = Modifier.padding(4.dp, 16.dp),painter = painterResource(id = R.drawable.overlay_0), contentDescription = "bell")
         Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.permission_required_title), style = MaterialTheme.typography.titleLarge)
-        Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.usage_data_permission_details))
+        Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.overlay_permission_details))
         Spacer(modifier = Modifier.height(48.dp))
         Button(onClick = onClickAllow) {
             Text(modifier = Modifier.padding(16.dp, 4.dp), text = stringResource(id = R.string.button_allow))
@@ -176,5 +180,5 @@ fun OverlayPermissionContent(onClickAllow: ()-> Unit) {
 @Preview
 @Composable
 fun NotificationPermissionContentPreview() {
-    UsageMonitorPermissionContent({})
+
 }

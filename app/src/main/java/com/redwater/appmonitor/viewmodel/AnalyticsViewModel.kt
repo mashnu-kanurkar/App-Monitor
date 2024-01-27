@@ -2,11 +2,14 @@ package com.redwater.appmonitor.viewmodel
 
 import android.content.Context
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.redwater.appmonitor.data.model.AppModel
+import com.redwater.appmonitor.data.model.MonthlyStats
+import com.redwater.appmonitor.data.model.TimeModel
 import com.redwater.appmonitor.data.model.toAppModel
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.logger.Logger
@@ -28,8 +31,28 @@ class AnalyticsViewModel(private val repository: AppUsageStatsRepository): ViewM
         private set
     var analyticsState: MutableState<AnalyticsState> = mutableStateOf(AnalyticsState())
         private set
+    var monthlyStats = mutableStateListOf<MonthlyStats>()
+        private set
 
-
+    fun getMonthlyStats(packageName: String, context: Context){
+        Logger.d(TAG, "getting monthly app usage")
+        if (permissionManager.hasUsagePermission(context).not()){
+            analyticsState.value =
+                analyticsState.value.copy(showError = Error(show = true, errorMsg = "Permissions denied"), permissionPopUpState = PermissionPopUpState(show = true, permissionType = PermissionType.overlayPermission))
+            return
+        }else{
+            analyticsState.value =
+                analyticsState.value.copy(showError = Error(show = false), permissionPopUpState = PermissionPopUpState(show = false, permissionType = null))
+        }
+        viewModelScope.launch {
+            Logger.d(TAG, "changing loader state to true")
+            analyticsState.value = analyticsState.value.copy(dataLoadingState = DataLoadingState(show = true, message = "Analysing data"))
+            Logger.d(TAG, "changed loader state true")
+            val stats = repository.getMonthlyAppUsage(packageName = packageName, context = context.applicationContext)
+            Logger.d(TAG, "monthly for $packageName : $stats")
+            monthlyStats.addAll(stats)
+        }
+    }
     fun getPackageInfo(packageName: String,context: Context){
 
         Logger.d(TAG, "getting app usage")
@@ -45,7 +68,7 @@ class AnalyticsViewModel(private val repository: AppUsageStatsRepository): ViewM
             Logger.d(TAG, "changing loader state to true")
             analyticsState.value = analyticsState.value.copy(dataLoadingState = DataLoadingState(show = true, message = "Analysing data"))
             Logger.d(TAG, "changed loader state true")
-            var appUsage = repository.getAppModelData(packageName = packageName, context = context.applicationContext, enableSessionData = true)[packageName]
+            var appUsage = repository.getAppModelData(packageName = packageName, context = context.applicationContext)[packageName]
             Logger.d(TAG, "app model for $packageName : $appUsage")
             repository.getSavedPrefsFor(packageName = packageName).collectLatest {
                 Logger.d(TAG, "collected app data: $it")
@@ -58,10 +81,6 @@ class AnalyticsViewModel(private val repository: AppUsageStatsRepository): ViewM
             }
             //The code after this collect statement is not reachable
         }
-//        viewModelScope.launch {
-//            //repository.getAllUsageEventsFor(context = context, packageName = packageName)
-//            //repository.getUsageStatisticV2(context = context)
-//        }
     }
     fun getPermissionState(context: Context){
         permissionStateMap.putAll(permissionManager.getPermissionState(context = context))
@@ -78,6 +97,7 @@ class AnalyticsViewModel(private val repository: AppUsageStatsRepository): ViewM
     }
 
     fun onAppPrefsClickEvent(packageName: String, isSelected: Boolean, context: Context){
+        Logger.d(TAG, "isSelected: $isSelected")
         if (permissionStateMap.get(PermissionType.overlayPermission)?.hasPermission == false){
             analyticsState.value = analyticsState.value.copy(permissionPopUpState = PermissionPopUpState(show = true, permissionType = PermissionType.overlayPermission))
             return
@@ -88,7 +108,6 @@ class AnalyticsViewModel(private val repository: AppUsageStatsRepository): ViewM
         }
         if (isSelected){
             analyticsState.value = analyticsState.value.copy(showTimePopUp = true)
-
         }else{
             viewModelScope.launch {
                 repository.unselectPrefsFor(packageName = packageName)
@@ -108,9 +127,35 @@ class AnalyticsViewModel(private val repository: AppUsageStatsRepository): ViewM
         }
     }
 
+    fun onTimeSelection(isDismiss: Boolean = false, packageName: String? = null, timeModel: TimeModel?, context: Context? = null){
+        if (isDismiss){
+            analyticsState.value = analyticsState.value.copy(showTimePopUp = false)
+        }else{
+            if (packageName != null && timeModel != null && context != null){
+                analyticsState.value = analyticsState.value.copy(showTimePopUp = false)
+                changeAppPrefs(packageName = packageName, timeModel = timeModel, context = context)
+            }
+        }
+    }
+
     private fun changeAppPrefs(packageName: String, thresholdTimeInString: String, context: Context){
         viewModelScope.launch {
             val thresholdTimeInMin: Short = TimeFormatUtility().getTimeInMin(thresholdTimeInString = thresholdTimeInString)
+            val appInfo =  analyticsState.value.appModel
+            if (appInfo != null){
+                repository.insertPrefsFor(
+                    AppModel(packageName = appInfo.packageName,
+                        name = appInfo.name,
+                        isSelected = true,
+                        thresholdTime = thresholdTimeInMin)
+                )
+            }
+        }
+    }
+
+    private fun changeAppPrefs(packageName: String, timeModel: TimeModel, context: Context){
+        viewModelScope.launch {
+            val thresholdTimeInMin: Short = TimeFormatUtility().getTimeInMin(timeModel = timeModel)
             val appInfo =  analyticsState.value.appModel
             if (appInfo != null){
                 repository.insertPrefsFor(

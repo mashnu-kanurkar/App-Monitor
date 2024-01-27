@@ -30,4 +30,6 @@ object Constants {
     const val defImagePuzzle = ""
     const val defMeme = ""
     const val defQuote = ""
+
+    const val privacyPolicyURL = "https://www.freeprivacypolicy.com/live/53699ba9-d108-4b57-a71b-21961c539fe1"
 }

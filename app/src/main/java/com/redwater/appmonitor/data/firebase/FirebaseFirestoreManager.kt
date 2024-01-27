@@ -5,6 +5,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.redwater.appmonitor.data.model.OverlayPayload
 import com.redwater.appmonitor.logger.Logger
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 class FirebaseFirestoreManager {
@@ -32,6 +33,7 @@ class FirebaseFirestoreManager {
             .getOverlayPayload()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun Query.getOverlayPayload(): List<OverlayPayload>?{
         Logger.d(TAG, "querying data: getNextPuzzleOverlayData")
         return try {

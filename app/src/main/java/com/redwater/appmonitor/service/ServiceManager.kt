@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.redwater.appmonitor.AppMonitorApp
 import com.redwater.appmonitor.Constants
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.logger.Logger
@@ -19,30 +20,43 @@ object ServiceManager {
 
     private val TAG = this::class.simpleName?:"Service Manager"
 
-    fun startService(context: Context, intent: Intent = Intent(context, OverlayService::class.java)) {
+    fun startService(context: Context, intent: Intent = Intent(context, OverlayService::class.java,)) {
         Logger.d(TAG, "starting service")
 
-        if (OverlayService.isRunning.value.not()){
-            val hasSavedAppRecords = true
-            if (hasSavedAppRecords) {
-                val permissionManager = PermissionManager()
-                if (permissionManager.hasOverlayPermission(context) && permissionManager.hasNotificationPermission(context)){
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        ContextCompat.startForegroundService(context.applicationContext, intent)
-                    } else {
-                        context.startService(intent)
-                    }
-                    val foregroundAppWorkRequest = PeriodicWorkRequestBuilder<ForegroundAppWorker>(Constants.foregroundAppWorkerPeriodInMin, TimeUnit.MINUTES).build()
-                    WorkManager.getInstance(context.applicationContext)
-                        .enqueueUniquePeriodicWork(Constants.foregroundAppWorkerTag, ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, foregroundAppWorkRequest)
+        if (OverlayService.isRunning.value.not()) {
 
-                    val firebaseSyncWorkRequest = PeriodicWorkRequestBuilder<FirebaseSyncWorker>(Constants.firebaseSyncWorkerPeriodInHour, TimeUnit.MINUTES).build()
-                    WorkManager.getInstance(context.applicationContext)
-                        .enqueueUniquePeriodicWork(Constants.firebaseSyncWorkerTag, ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, firebaseSyncWorkRequest)
+            val permissionManager = PermissionManager()
+            if (permissionManager.hasOverlayPermission(context) && permissionManager.hasNotificationPermission(
+                    context
+                )
+            ) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    ContextCompat.startForegroundService(context.applicationContext, intent)
+                } else {
+                    context.startService(intent)
                 }
+                val foregroundAppWorkRequest = PeriodicWorkRequestBuilder<ForegroundAppWorker>(
+                    Constants.foregroundAppWorkerPeriodInMin,
+                    TimeUnit.MINUTES
+                ).build()
+                WorkManager.getInstance(context.applicationContext)
+                    .enqueueUniquePeriodicWork(
+                        Constants.foregroundAppWorkerTag,
+                        ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
+                        foregroundAppWorkRequest
+                    )
+
+                val firebaseSyncWorkRequest = PeriodicWorkRequestBuilder<FirebaseSyncWorker>(
+                    Constants.firebaseSyncWorkerPeriodInHour,
+                    TimeUnit.MINUTES
+                ).build()
+                WorkManager.getInstance(context.applicationContext)
+                    .enqueueUniquePeriodicWork(
+                        Constants.firebaseSyncWorkerTag,
+                        ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
+                        firebaseSyncWorkRequest
+                    )
             }
-        }else{
-            Logger.d(TAG, "can not start service: no apps listed")
         }
     }
 

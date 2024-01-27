@@ -16,6 +16,7 @@ import com.redwater.appmonitor.data.AppPrefsDao
 import com.redwater.appmonitor.data.model.AppDataFromSystem
 import com.redwater.appmonitor.data.model.AppModel
 import com.redwater.appmonitor.data.model.AppRoomModel
+import com.redwater.appmonitor.data.model.MonthlyStats
 import com.redwater.appmonitor.data.model.Session
 import com.redwater.appmonitor.data.model.hourlyDistributionInMillis
 import com.redwater.appmonitor.data.model.toAppModel
@@ -99,10 +100,36 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
             return@withContext appPrefsDao.getAppPrefsFor(packageName)
         }
     }
-    suspend fun getAppModelData(packageName: String? = null, context: Context, enableSessionData:Boolean = false): HashMap<String, AppModel> {
+
+    suspend fun getMonthlyAppUsage(packageName: String, context: Context): List<MonthlyStats> {
+        return withContext(Dispatchers.Default){
+            val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+            val calendar: Calendar = Calendar.getInstance()
+            calendar.apply {
+                set(Calendar.HOUR, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                set(Calendar.AM_PM, Calendar.AM)
+                set(Calendar.DAY_OF_MONTH, 1)
+            }
+
+            val startTime: Long = calendar.timeInMillis
+            val endTime = System.currentTimeMillis()
+            val stats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime, endTime)
+            val statsForPackage = mutableListOf<MonthlyStats>()
+            stats.forEach {
+                if (it.packageName == packageName){
+                    statsForPackage.add(MonthlyStats(it.packageName, it.firstTimeStamp, it.lastTimeStamp, it.totalTimeInForeground))
+                }
+            }
+            return@withContext statsForPackage
+        }
+    }
+    suspend fun getAppModelData(packageName: String? = null, context: Context): HashMap<String, AppModel> {
         val appMetadata = getAppMetadata(context = context, packageName = packageName)
         Logger.d(TAG, "queried app metadata: $appMetadata")
-        return getAppUsageStats(context = context, appUsageMap = appMetadata, enableSessionData = enableSessionData)
+        return getAppUsageStats(context = context, appUsageMap = appMetadata,)
     }
     private suspend fun getAppMetadata(context: Context, packageName: String?):HashMap<String, AppModel> {
         return withContext(Dispatchers.Default){
@@ -161,7 +188,7 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
             )
         }
     }
-    private suspend fun  getAppUsageStats(context: Context, appUsageMap: HashMap<String, AppModel>, enableSessionData: Boolean = false): HashMap<String, AppModel>{
+    private suspend fun  getAppUsageStats(context: Context, appUsageMap: HashMap<String, AppModel>,): HashMap<String, AppModel>{
         Logger.d(TAG, "getting stats for $appUsageMap")
         val userManager = context.getSystemService( Context.USER_SERVICE ) as UserManager
         if (userManager.isUserUnlocked.not()){
@@ -170,11 +197,14 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
         return withContext(Dispatchers.Default){
             val allEventList = mutableListOf<UsageEvents.Event>()
             val calendar: Calendar = Calendar.getInstance()
-            calendar.set(Calendar.HOUR, 0)
-            calendar.set(Calendar.MINUTE, 0)
-            calendar.set(Calendar.SECOND, 0)
-            calendar.set(Calendar.MILLISECOND, 0)
-            calendar.set(Calendar.AM_PM, Calendar.AM)
+            calendar.apply {
+                set(Calendar.HOUR, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                set(Calendar.AM_PM, Calendar.AM)
+            }
+
             val startTime: Long = calendar.timeInMillis
             val endTime = System.currentTimeMillis()
             val usageStatsManager =

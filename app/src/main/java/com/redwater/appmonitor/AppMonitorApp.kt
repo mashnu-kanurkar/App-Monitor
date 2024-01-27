@@ -2,11 +2,13 @@ package com.redwater.appmonitor
 
 import android.app.Application
 import android.os.Build
+import android.os.Debug
 import com.redwater.appmonitor.data.AppDatabase
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.data.repository.OverlayDataRepository
 import com.redwater.appmonitor.logger.LogLevel
 import com.redwater.appmonitor.logger.Logger
+import io.grpc.android.BuildConfig
 
 class AppMonitorApp: Application() {
 
@@ -25,7 +27,12 @@ class AppMonitorApp: Application() {
 
     override fun onCreate() {
         super.onCreate()
-        Logger.setLogLevel(LogLevel.DEBUG)
+        if (BuildConfig.DEBUG){
+            Logger.setLogLevel(LogLevel.DEBUG)
+        }else{
+            Logger.setLogLevel(LogLevel.OFF)
+        }
+
         Logger.d(TAG, "Build type: ${Build.TYPE}")
 
     }

@@ -22,5 +22,9 @@
     <color name="onPrimaryContainer">#00201a</color>
     <color name="secondaryContainer">#cde8df</color>
     <color name="onSecondaryContainer">#07201a</color>
+    <color name="violet">#FF592941</color>
+    <color name="viridian">#FF498467</color>
+    <color name="mint">#FF52B788</color>
+    <color name="celedon">#FFB2D3A8</color>
 
 </resources>

@@ -4,12 +4,12 @@
     <style name="Theme.AppMonitor" parent="android:Theme.Material.Light.NoActionBar">
         <item name="fontFamily">@font/roboto_light</item>
         <item name="android:fontFamily">@font/roboto_light</item>
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorOnPrimary">@color/onPrimary</item>
-        <item name="colorSecondary">@color/secondary</item>
-        <item name="colorOnSecondary">@color/onSecondary</item>
-        <item name="colorTertiary">@color/tertiary</item>
-        <item name="colorOnTertiary">@color/onTertiary</item>
+        <item name="colorPrimary">@color/violet</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/viridian</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorTertiary">@color/mint</item>
+        <item name="colorOnTertiary">@color/black</item>
         <item name="colorError">#ba1a1a</item>
         <item name="colorOnError">#ffffff</item>
         <item name="android:colorBackground">#fafdfa</item>
@@ -21,5 +21,6 @@
         <item name="colorOnSecondaryContainer">#07201a</item>
         <item name="colorSurface">#fafdfa</item>
         <item name="colorOnSurface">#191c1b</item>
+
     </style>
 </resources>

@@ -6,6 +6,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -16,8 +20,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -27,23 +36,27 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.redwater.appmonitor.Constants
 import com.redwater.appmonitor.R
-import com.redwater.appmonitor.data.OnBoardingPreferences
-import com.redwater.appmonitor.data.dataStore
+import com.redwater.appmonitor.data.UserPreferences
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.ui.screens.AnalyticsScreen
 import com.redwater.appmonitor.ui.screens.HomeScreen
 import com.redwater.appmonitor.ui.screens.PermissionScreen
+import com.redwater.appmonitor.ui.screens.PrivacyPolicyAgreementScreen
 import com.redwater.appmonitor.viewmodel.AnalyticsViewModel
 import com.redwater.appmonitor.viewmodel.MainViewModel
 import com.redwater.appmonitor.viewmodel.PermissionViewModel
 import com.redwater.appmonitor.viewmodel.ViewModelFactory
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 enum class AppScreens(@StringRes val title: Int, val route: String){
     HomeScreen(title = R.string.app_name, route = "homeScreen"),
     Analytics(title = R.string.analytics, route = "analytics/{packageName}"),
-    Permission(title = R.string.permission, route = "permission")
+    Permission(title = R.string.permission, route = "permission"),
+    PrivacyPolicy(title = R.string.privacy_policy_title, route = "privacy_policy")
 
 }
 
@@ -57,6 +70,9 @@ fun getTitle(route: String?): Int {
     if (route?.contains("permission") == true){
         return AppScreens.Permission.title
     }
+    if (route?.contains("privacy_policy") == true){
+        return AppScreens.PrivacyPolicy.title
+    }
     return R.string.app_name
 }
 
@@ -66,12 +82,17 @@ fun AppMonitorAppBar(
     title: Int,
     canNavigateBack: Boolean,
     navigateUp: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+
 ) {
+    var expanded by remember {
+        mutableStateOf(false)
+    }
+    val uriHandler = LocalUriHandler.current
     TopAppBar(
-        title = { Text(stringResource(title)) },
+        title = { Text(text = stringResource(title), color = MaterialTheme.colorScheme.onPrimary) },
         colors = TopAppBarDefaults.mediumTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+            containerColor = MaterialTheme.colorScheme.primary
         ),
         modifier = modifier,
         navigationIcon = {
@@ -79,9 +100,26 @@ fun AppMonitorAppBar(
                 IconButton(onClick = navigateUp) {
                     Icon(
                         imageVector = Icons.Filled.ArrowBack,
+                        tint = MaterialTheme.colorScheme.onPrimary,
                         contentDescription = stringResource(R.string.back_button)
                     )
                 }
+            }
+        },
+        actions = {
+            IconButton(onClick = { expanded = !expanded}) {
+                Icon(imageVector = Icons.Filled.MoreVert, tint = MaterialTheme.colorScheme.onPrimary, contentDescription = "more")
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = !expanded}
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Privacy policy") },
+                    onClick = {
+                        uriHandler.openUri(Constants.privacyPolicyURL)
+                    }
+                )
             }
         }
     )
@@ -91,35 +129,52 @@ fun AppMonitorAppBar(
 fun MainApp(repository: AppUsageStatsRepository,
             navController: NavHostController = rememberNavController(),
             onBoardingRequired: Int = 0,
+            isPrivacyPolicyAccepted: Int = 0,
             context: Context = LocalContext.current) {
 
+    val coroutineScope = rememberCoroutineScope()
     // Get current back stack entry
     val backStackEntry by navController.currentBackStackEntryAsState()
     // Get the name of the current screen
     val currentScreenTitle = getTitle(backStackEntry?.destination?.route)
     Logger.d("MainApp", "onBoardingRequired: $onBoardingRequired")
+    Logger.d("MainApp", "privacy policy accepted: $isPrivacyPolicyAccepted")
+    val startDestination = if (isPrivacyPolicyAccepted > 0) AppScreens.HomeScreen.route else if (onBoardingRequired > 0) AppScreens.PrivacyPolicy.route else AppScreens.Permission.route
     Scaffold(
         topBar = {
             AppMonitorAppBar(
                 title = currentScreenTitle,
                 canNavigateBack = navController.previousBackStackEntry != null,
-                navigateUp = { navController.navigateUp() }
+                navigateUp = { navController.navigateUp() },
             )
+
         }
     ) { innerPadding ->
+
         NavHost(
             navController = navController,
-            startDestination = if (onBoardingRequired > 0) AppScreens.HomeScreen.route else AppScreens.Permission.route,
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(route = AppScreens.Permission.route){
                 val permissionViewModel = viewModel<PermissionViewModel>()
                 PermissionScreen(permissionViewModel = permissionViewModel){
+                    navController.navigate(route = AppScreens.PrivacyPolicy.route){
+                        popUpTo(navController.graph.id){
+                            inclusive = true
+                        }
+                    }
+                }
+            }
+            composable(route = AppScreens.PrivacyPolicy.route){
+                PrivacyPolicyAgreementScreen {
+                    coroutineScope.launch {
+                        UserPreferences(context = context).updatePrivacyPolicyAcceptPrefs(isAccepted = 1)
+                    }
                     navController.navigate(route = AppScreens.HomeScreen.route){
                         popUpTo(navController.graph.id){
                             inclusive = true
                         }
-
                     }
                 }
             }
@@ -142,6 +197,7 @@ fun MainApp(repository: AppUsageStatsRepository,
                 val analyticsViewModel = viewModel<AnalyticsViewModel>(factory = ViewModelFactory(repository) )
                 AnalyticsScreen(analyticsViewModel = analyticsViewModel, packageName = packageName, modifier = Modifier.fillMaxSize(), context = context)
             }
+
         }
     }
 
