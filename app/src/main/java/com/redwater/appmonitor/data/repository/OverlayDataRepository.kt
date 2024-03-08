@@ -1,6 +1,8 @@
 package com.redwater.appmonitor.data.repository
 
+import com.redwater.appmonitor.Constants
 import com.redwater.appmonitor.data.OverlayDataDao
+import com.redwater.appmonitor.data.firebase.FirebaseConstants
 import com.redwater.appmonitor.data.firebase.FirebaseFirestoreManager
 import com.redwater.appmonitor.data.model.OverlayPayload
 import com.redwater.appmonitor.logger.Logger
@@ -46,10 +48,21 @@ class OverlayDataRepository(private val overlayDataDao: OverlayDataDao) {
             val overlayData = overlayDataDao.getGreaterDifficultyOverlayData(0, 100)
             if (overlayData == null){
                 val firebaseFirestoreManager = FirebaseFirestoreManager()
-
                 return@withContext null
             }else{
                 return@withContext overlayData
+            }
+        }
+    }
+
+    suspend fun getRandomQuote(): String{
+        Logger.d(TAG, "getRandomQuote")
+        return withContext(Dispatchers.IO){
+            val quotes = overlayDataDao.getRandomEntry(type = FirebaseConstants.quotesType)
+            if (quotes == null){
+                return@withContext Constants.defQuote
+            }else{
+                return@withContext quotes.data
             }
         }
     }

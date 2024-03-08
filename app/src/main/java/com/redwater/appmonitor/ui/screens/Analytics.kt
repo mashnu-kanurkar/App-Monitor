@@ -30,6 +30,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import com.ironsource.mediationsdk.IronSource
 import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
 import com.redwater.appmonitor.R
@@ -60,7 +61,8 @@ fun AnalyticsScreen(
     lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
     analyticsViewModel: AnalyticsViewModel,
     packageName: String?,
-    context: Context = LocalContext.current, ) {
+    context: Context = LocalContext.current
+) {
 
     val TAG = "AnalyticsScreen"
     val uiState by analyticsViewModel.analyticsState
@@ -219,6 +221,7 @@ fun AnalyticsScreen(
                             context = context.applicationContext,
                             packageName = packageName
                         )
+                        if (IronSource.isInterstitialReady()) IronSource.showInterstitial()
                     }) {
                     analyticsViewModel.onTimeSelection(isDismiss = true)
                 }

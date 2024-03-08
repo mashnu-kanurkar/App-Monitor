@@ -27,13 +27,16 @@ class AppMonitorApp: Application() {
 
     override fun onCreate() {
         super.onCreate()
-        if (BuildConfig.DEBUG){
-            Logger.setLogLevel(LogLevel.DEBUG)
-        }else{
-            Logger.setLogLevel(LogLevel.OFF)
-        }
 
-        Logger.d(TAG, "Build type: ${Build.TYPE}")
+        Logger.i(TAG, "Debug Build : ${BuildConfig.DEBUG}")
+        Logger.setLogLevel(LogLevel.DEBUG)
+//        if (BuildConfig.DEBUG){
+//            Logger.setLogLevel(LogLevel.DEBUG)
+//        }else{
+//            Logger.setLogLevel(LogLevel.OFF)
+//        }
+
+
 
     }
 

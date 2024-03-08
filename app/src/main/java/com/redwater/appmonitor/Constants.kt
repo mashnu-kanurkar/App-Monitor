@@ -29,7 +29,7 @@ object Constants {
     const val defPuzzleText = "{\"que\":\"10 - 86 + 25 + 80 = ?\",\"time\":\"9\",\"options\":[{\"text\":\"27.7\",\"color\":\"null\",\"is_answer\":false},{\"text\":\"8.5\",\"color\":\"null\",\"is_answer\":false},{\"text\":\"29.0\",\"color\":\"null\",\"is_answer\":true},{\"text\":\"22.9\",\"color\":\"null\",\"is_answer\":false}]}"
     const val defImagePuzzle = ""
     const val defMeme = ""
-    const val defQuote = ""
+    const val defQuote = "Change might not be fast and it isn\'t always easy. But with time and effort, almost any habit can be reshaped. \$Author-Charles Duhigg"
 
     const val privacyPolicyURL = "https://www.freeprivacypolicy.com/live/53699ba9-d108-4b57-a71b-21961c539fe1"
 }

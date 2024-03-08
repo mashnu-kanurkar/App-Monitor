@@ -32,8 +32,8 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import com.ironsource.mediationsdk.IronSource
 import com.redwater.appmonitor.R
-import com.redwater.appmonitor.data.model.AppModel
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.ui.PermissionType
 import com.redwater.appmonitor.ui.components.ErrorDescriptor
@@ -51,17 +51,9 @@ fun HomeScreen(modifier: Modifier = Modifier,
                mainViewModel: MainViewModel,
                context: Context = LocalContext.current,
                onNavigateNext: (packageName: String)-> Unit,
-               onNavigateToPermissionScreen: ()-> Unit,
+               onNavigateToPermissionScreen: ()-> Unit
                ) {
     val TAG = "HomeScreen"
-    var selectedApps = remember {
-        mutableListOf<AppModel>()
-    }
-
-    var unselectedApps = remember {
-        mutableListOf<AppModel>()
-    }
-
     val uiStateUnselected = remember {
         mainViewModel.uiStateUnselected
     }
@@ -241,6 +233,7 @@ fun HomeScreen(modifier: Modifier = Modifier,
                             index = showTimePopUpForApp!!,
                             timeModel = it,)
                         showTimePopUpForApp = null
+                        if (IronSource.isInterstitialReady()) IronSource.showInterstitial()
                     }) {
                     showTimePopUpForApp = null
                 }

@@ -1,8 +1,14 @@
 package com.redwater.appmonitor.ui
 
+import android.app.Activity
 import android.content.Context
+import android.widget.TextView
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -25,9 +31,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -36,12 +45,21 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.ironsource.mediationsdk.ISBannerSize
+import com.ironsource.mediationsdk.IronSource
+import com.ironsource.mediationsdk.IronSourceBannerLayout
+import com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo
+import com.ironsource.mediationsdk.logger.IronSourceError
+import com.ironsource.mediationsdk.sdk.LevelPlayBannerListener
 import com.redwater.appmonitor.Constants
 import com.redwater.appmonitor.R
+import com.redwater.appmonitor.advertising.ADManager
+import com.redwater.appmonitor.advertising.BannerPlacement
 import com.redwater.appmonitor.data.UserPreferences
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.ui.screens.AnalyticsScreen
+import com.redwater.appmonitor.ui.screens.Dashboard
 import com.redwater.appmonitor.ui.screens.HomeScreen
 import com.redwater.appmonitor.ui.screens.PermissionScreen
 import com.redwater.appmonitor.ui.screens.PrivacyPolicyAgreementScreen
@@ -53,6 +71,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 enum class AppScreens(@StringRes val title: Int, val route: String){
+    Dashboard(title = R.string.app_name, route = "dashboard"),
     HomeScreen(title = R.string.app_name, route = "homeScreen"),
     Analytics(title = R.string.analytics, route = "analytics/{packageName}"),
     Permission(title = R.string.permission, route = "permission"),
@@ -61,6 +80,9 @@ enum class AppScreens(@StringRes val title: Int, val route: String){
 }
 
 fun getTitle(route: String?): Int {
+    if (route?.contains("dashboard") == true){
+        return AppScreens.Dashboard.title
+    }
     if (route?.contains("homeScreen") == true){
         return AppScreens.HomeScreen.title
     }
@@ -132,14 +154,16 @@ fun MainApp(repository: AppUsageStatsRepository,
             isPrivacyPolicyAccepted: Int = 0,
             context: Context = LocalContext.current) {
 
+    val TAG = "MainApp"
+
     val coroutineScope = rememberCoroutineScope()
     // Get current back stack entry
     val backStackEntry by navController.currentBackStackEntryAsState()
     // Get the name of the current screen
     val currentScreenTitle = getTitle(backStackEntry?.destination?.route)
-    Logger.d("MainApp", "onBoardingRequired: $onBoardingRequired")
-    Logger.d("MainApp", "privacy policy accepted: $isPrivacyPolicyAccepted")
-    val startDestination = if (isPrivacyPolicyAccepted > 0) AppScreens.HomeScreen.route else if (onBoardingRequired > 0) AppScreens.PrivacyPolicy.route else AppScreens.Permission.route
+    Logger.d(TAG, "onBoardingRequired: $onBoardingRequired")
+    Logger.d(TAG, "privacy policy accepted: $isPrivacyPolicyAccepted")
+    val startDestination = if (isPrivacyPolicyAccepted > 0) AppScreens.Dashboard.route else if (onBoardingRequired > 0) AppScreens.PrivacyPolicy.route else AppScreens.Permission.route
     Scaffold(
         topBar = {
             AppMonitorAppBar(
@@ -147,15 +171,31 @@ fun MainApp(repository: AppUsageStatsRepository,
                 canNavigateBack = navController.previousBackStackEntry != null,
                 navigateUp = { navController.navigateUp() },
             )
-
+        },
+        bottomBar = {
+            AndroidView(
+                modifier = Modifier
+                    .height(50.dp)
+                    .fillMaxWidth()
+                    .background(color = Color.Black),
+                factory = {
+                    IronSource.createBanner(context as Activity?, ISBannerSize.SMART)
+                },
+                update = {
+                    Logger.d(TAG, "Banner layout inflated")
+                    ADManager.getInstance(context.applicationContext).setBannerLayout(ironSourceBannerLayout = it, placement = BannerPlacement.HomeBanner())
+                }
+            )
         }
     ) { innerPadding ->
-
         NavHost(
             navController = navController,
             startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable(route = AppScreens.Dashboard.route){
+                Dashboard(blogTruncatedText = "")
+            }
             composable(route = AppScreens.Permission.route){
                 val permissionViewModel = viewModel<PermissionViewModel>()
                 PermissionScreen(permissionViewModel = permissionViewModel){
@@ -183,7 +223,7 @@ fun MainApp(repository: AppUsageStatsRepository,
                 HomeScreen(mainViewModel = mainViewModel,
                     modifier = Modifier.fillMaxSize(), context = context,
                     onNavigateNext = {packageName: String ->
-                        Logger.d("Main App", "Navigating with $packageName")
+                        Logger.d(TAG, "Navigating with $packageName")
                         navController.navigate(AppScreens.Analytics.route.replace(oldValue = "{packageName}", newValue = packageName))
                     },
                     onNavigateToPermissionScreen = {
@@ -193,12 +233,14 @@ fun MainApp(repository: AppUsageStatsRepository,
             }
             composable(route = AppScreens.Analytics.route, arguments = listOf(navArgument("packageName") { type = NavType.StringType })){ backStackEntry->
                 val packageName = backStackEntry.arguments?.getString("packageName")
-                Logger.d("Main App", "Navigating with $packageName")
+                Logger.d(TAG, "Navigating with $packageName")
                 val analyticsViewModel = viewModel<AnalyticsViewModel>(factory = ViewModelFactory(repository) )
-                AnalyticsScreen(analyticsViewModel = analyticsViewModel, packageName = packageName, modifier = Modifier.fillMaxSize(), context = context)
+                AnalyticsScreen(analyticsViewModel = analyticsViewModel,
+                    packageName = packageName, modifier = Modifier.fillMaxSize(),
+                    context = context
+                    )
             }
 
         }
     }
-
 }

@@ -10,7 +10,6 @@ import com.redwater.appmonitor.data.firebase.FirebaseFirestoreManager
 class FirebaseSyncWorker(private val appContext: Context,
                          private val workerParams: WorkerParameters): CoroutineWorker(appContext, workerParams ) {
     override suspend fun doWork(): Result {
-
         return try {
             val overlayDataRepository = (appContext as AppMonitorApp).overlayDataRepository
             val firebaseFirestoreManager = FirebaseFirestoreManager()

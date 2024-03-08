@@ -11,7 +11,7 @@ import com.redwater.appmonitor.R
 import com.redwater.appmonitor.data.model.TextOption
 import com.redwater.appmonitor.logger.Logger
 
-class TextViewAdapter(val context: Context, private val textOptionList: List<TextOption>, val overlayViewActionListener: OverlayViewActionListener? = null): BaseAdapter() {
+class TextViewAdapter(val context: Context, private val textOptionList: List<TextOption>, val overlayViewActionListener: IOverlayViewActionListener? = null): BaseAdapter() {
 
     private val TAG = this::class.simpleName
     private val inflater:LayoutInflater = LayoutInflater.from(context)

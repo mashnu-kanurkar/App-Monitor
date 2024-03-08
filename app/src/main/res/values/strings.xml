@@ -57,4 +57,16 @@
     <string name="session_length">Session Length</string>
 <!--    -->
 
+<!--    Dashboard-->
+    <string name="quote_title">Quote of the day</string>
+    <string name="app_usage_breakdown">Major app usage breakdown</string>
+    <string name="blog_header">Keep yourself motivated</string>
+    <string name="read_more">read more</string>
+    <string name="dnd_header">Do not disturb mode</string>
+    <string name="dnd_description">You can set the DND mode for any application, so that you can avoid the app usage within that time</string>
+    <string name="dnd_button">Set DND</string>
+    <string name="usage_limit_header">Limit app usage</string>
+    <string name="usage_limit_description">You can set the usage limit for any application, so that you can limit your daily app usage time</string>
+    <string name="usage_limit_button">Set usage limit</string>
+
 </resources>

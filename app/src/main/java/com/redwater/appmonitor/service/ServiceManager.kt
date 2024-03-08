@@ -46,16 +46,16 @@ object ServiceManager {
                         foregroundAppWorkRequest
                     )
 
-                val firebaseSyncWorkRequest = PeriodicWorkRequestBuilder<FirebaseSyncWorker>(
-                    Constants.firebaseSyncWorkerPeriodInHour,
-                    TimeUnit.MINUTES
-                ).build()
-                WorkManager.getInstance(context.applicationContext)
-                    .enqueueUniquePeriodicWork(
-                        Constants.firebaseSyncWorkerTag,
-                        ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
-                        firebaseSyncWorkRequest
-                    )
+//                val firebaseSyncWorkRequest = PeriodicWorkRequestBuilder<FirebaseSyncWorker>(
+//                    Constants.firebaseSyncWorkerPeriodInHour,
+//                    TimeUnit.MINUTES
+//                ).build()
+//                WorkManager.getInstance(context.applicationContext)
+//                    .enqueueUniquePeriodicWork(
+//                        Constants.firebaseSyncWorkerTag,
+//                        ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
+//                        firebaseSyncWorkRequest
+//                    )
             }
         }
     }

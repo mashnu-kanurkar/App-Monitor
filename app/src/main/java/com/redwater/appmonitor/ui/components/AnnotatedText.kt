@@ -2,6 +2,7 @@ package com.redwater.appmonitor.ui.components
 
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.SpanStyle
@@ -12,7 +13,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.redwater.appmonitor.logger.Logger
 
 @Composable
-fun AnnotatedClickableText(normalTextPart: String, clickableTextPart: String, url: String) {
+fun AnnotatedClickableText(modifier: Modifier = Modifier, normalTextPart: String, clickableTextPart: String, url: String) {
     val annotatedText = buildAnnotatedString {
         append(normalTextPart)
 
@@ -31,7 +32,7 @@ fun AnnotatedClickableText(normalTextPart: String, clickableTextPart: String, ur
         pop()
     }
     val uriHandler = LocalUriHandler.current
-    ClickableText(text = annotatedText, onClick = { offset ->
+    ClickableText(modifier = modifier, text = annotatedText, onClick = { offset ->
         // We check if there is an *URL* annotation attached to the text
         // at the clicked position
         annotatedText.getStringAnnotations(
