@@ -66,7 +66,11 @@ class MainViewModel(private val preferenceRepository: AppUsageStatsRepository,):
                         savedAppList.forEach {appModel->
                             if (allAppUsageMap.containsKey(appModel.packageName)){
                                 allAppUsageMap[appModel.packageName]?.let {appUsageStats->
-                                    allAppUsageMap[appModel.packageName] = appUsageStats.copy(isSelected = appModel.isSelected, thresholdTime = appModel.thresholdTime)
+                                    allAppUsageMap[appModel.packageName] = appUsageStats.copy(isSelected = appModel.isSelected,
+                                        thresholdTime = appModel.thresholdTime,
+                                        dndStartTime = appModel.dndStartTime,
+                                        dndEndTime = appModel.dndEndTime
+                                    )
                                 }
                             }
                         }
@@ -94,36 +98,20 @@ class MainViewModel(private val preferenceRepository: AppUsageStatsRepository,):
         }
     }
 
-    //when unselected app is selected
-    fun onAppSelected(index: Int, thresholdTimeInString: String){
+    fun onAppSelected(index: Int, durationModel: TimeModel){
         viewModelScope.launch {
-            val thresholdTimeInMin: Short = TimeFormatUtility().getTimeInMin(thresholdTimeInString = thresholdTimeInString)
-            val appInfo =  uiStateUnselected[index].copy(isSelected = true, thresholdTime = thresholdTimeInMin)
-            preferenceRepository.insertPrefsFor(AppModel(packageName = appInfo.packageName,
-                name = appInfo.name,
-                isSelected = true,
-                thresholdTime = thresholdTimeInMin))
+            val thresholdTimeInMin: Short = TimeFormatUtility().getTimeInMin(timeModel = durationModel)
+            val appInfo =  uiStateUnselected[index].copy(isSelected = true,
+                thresholdTime = thresholdTimeInMin)
+            preferenceRepository.insertPrefsFor(appInfo)
         }
-    }
 
-    fun onAppSelected(index: Int, timeModel: TimeModel){
-        viewModelScope.launch {
-            val thresholdTimeInMin: Short = TimeFormatUtility().getTimeInMin(timeModel = timeModel)
-            val appInfo =  uiStateUnselected[index].copy(isSelected = true, thresholdTime = thresholdTimeInMin)
-            preferenceRepository.insertPrefsFor(AppModel(packageName = appInfo.packageName,
-                name = appInfo.name,
-                isSelected = true,
-                thresholdTime = thresholdTimeInMin))
-        }
     }
 
     //when selected app is unselected
     fun onAppUnSelected(index: Int){
         val appInfo =  uiStateSelected[index].copy(isSelected = false)
         allAppUsageMap.put(appInfo.packageName, appInfo)
-        //allAppUsageMap.remove(appInfo.packageName)
-//        uiStateSelected.removeAt(index)
-//        uiStateUnselected.add(appInfo)
         viewModelScope.launch {
             preferenceRepository.unselectPrefsFor(appInfo.packageName)
         }

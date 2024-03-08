@@ -8,21 +8,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.toBitmap
 import com.redwater.appmonitor.logger.Logger
 
 @Composable
@@ -38,13 +35,13 @@ fun PackageInfoCard(
     usageIndicator:  (@Composable () -> Unit)? = null,
     onClick: (packageName: String)->Unit,
     onChangePref:(index: Int)-> Unit ) {
-    val context = LocalContext.current
-    ElevatedCard(modifier = modifier) {
+    //val context = LocalContext.current
+    Card(modifier = modifier, elevation = CardDefaults.cardElevation(16.dp)) {
         Row(modifier = modifier
             .padding(4.dp)
             .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
 
             Image(modifier = Modifier

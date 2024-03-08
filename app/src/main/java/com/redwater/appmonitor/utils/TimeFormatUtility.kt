@@ -1,8 +1,12 @@
 package com.redwater.appmonitor.utils
 
+import android.os.Build
 import com.redwater.appmonitor.data.model.TimeModel
 import java.text.SimpleDateFormat
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.Calendar
+import java.util.Locale
 
 class TimeFormatUtility{
     val thresholdTimeStringList = listOf<String>("15 Min", "30 Min", "45 Min", "1 Hr", "2 Hrs", "3 Hrs")
@@ -32,7 +36,7 @@ class TimeFormatUtility{
     }
 
     fun getDateTimeFromEpoch(timestamp: Long, format: String = "dd-MM-yyyy hh:mm:ss"): String{
-        val formatter = SimpleDateFormat(format)
+        val formatter = SimpleDateFormat(format, Locale.US)
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = timestamp
         return formatter.format(calendar.time)
@@ -70,5 +74,93 @@ class TimeFormatUtility{
             }
 
         }
+    }
+
+    /**
+     * Checks if the given time string is within the set DND limit
+     * For example, if the string is 10:00 PM and startTime is 09:00 PM and endTime is 06:00 AM, then returns true else false
+     * @receiver timeToCheck [String] must be in format "hh:mm a"
+     * @param startTimeStr [String] start time of the DND period. must be in format "hh:mm a"
+     * @param endTimeStr [String] end time of the DND period. must be in format "hh:mm a"
+     *@return [Boolean] whether the timeToCheck falls within DND period
+     */
+
+    fun isWithinDNDTime(timeToCheckStr: String, startTimeStr: String, endTimeStr: String): Boolean {
+        var isWithinPeriod = false
+        try {
+                val dateFormat = SimpleDateFormat("hh:mm a", Locale.US)
+                val startTime = dateFormat.parse(startTimeStr)
+                val endTime = dateFormat.parse(endTimeStr)
+                val timeToCheck = dateFormat.parse(timeToCheckStr)
+
+                if (endTime != null && startTime != null && timeToCheck != null) {
+                    isWithinPeriod = if (endTime.before(startTime)) {
+                        val isOutsideDNDPeriod = timeToCheck.before(startTime) || timeToCheck.after(endTime)
+                        !isOutsideDNDPeriod
+                    } else {
+                        timeToCheck.after(startTime) && timeToCheck.before(endTime)
+                    }
+                }
+        } catch (e: Exception) {
+           e.printStackTrace()
+        }
+
+        return isWithinPeriod
+    }
+
+
+    fun isWithinDNDTimeV0(timeToCheckStr: String, startTimeStr: String, endTimeStr: String): Boolean{
+        var isWithinPeriod = false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            val formatter = DateTimeFormatter.ofPattern("hh:mm a")
+            val startTime = LocalTime.parse(startTimeStr, formatter)
+            val endTime = LocalTime.parse(endTimeStr, formatter)
+            val timeToCheck = LocalTime.parse(timeToCheckStr, formatter)
+
+            isWithinPeriod = if (endTime.isBefore(startTime)){
+                val inverseDND = timeToCheck.isBefore(startTime) && timeToCheck.isAfter(endTime)
+                inverseDND.not()
+            }else{
+                timeToCheck.isAfter(startTime) && timeToCheck.isBefore(endTime)
+            }
+
+        }else{
+            val dateFormat = SimpleDateFormat("hh:mm a", Locale.US)
+            val startTime = dateFormat.parse(startTimeStr)
+            val endTime = dateFormat.parse(endTimeStr)
+            val timeToCheck = dateFormat.parse(timeToCheckStr)
+
+            endTime?.let { endT ->
+                if (endT.before(startTime)){
+                    timeToCheck?.let {checkT->
+                        val inverseDND = checkT.before(startTime) && checkT.after(endTime)
+                        isWithinPeriod = inverseDND.not()
+                    }
+                }else{
+                    timeToCheck?.let {checkT->
+                        isWithinPeriod = checkT.after(startTime) && checkT.before(endTime)
+                    }
+                }
+            }
+        }
+        return isWithinPeriod
+    }
+
+    fun upcomingDNDDelay(timeToCheckStr: String, startTimeStr: String,): Long {
+        val dateFormat = SimpleDateFormat("hh:mm a", Locale.US)
+        val startTime = dateFormat.parse(startTimeStr)
+        val timeToCheck = dateFormat.parse(timeToCheckStr)
+
+        timeToCheck?.let {tCheck->
+            if (tCheck.before(startTime)){
+                startTime?.let {tStart->
+                    val diff = tStart.time - tCheck.time
+                    if (diff <= 60*60 && diff > 0){
+                        return diff/60
+                    }
+                }
+            }
+        }
+        return 61
     }
 }

@@ -1,6 +1,6 @@
 package com.redwater.appmonitor.overlayview
 
-interface OverlayViewActionListener {
+interface IOverlayViewActionListener {
 
     fun onDismissOverlayAction(delayInMin: Short = 0)
 

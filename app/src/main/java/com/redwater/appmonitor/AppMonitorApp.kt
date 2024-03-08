@@ -1,11 +1,10 @@
 package com.redwater.appmonitor
 
 import android.app.Application
-import android.os.Build
-import android.os.Debug
 import com.redwater.appmonitor.data.AppDatabase
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
-import com.redwater.appmonitor.data.repository.OverlayDataRepository
+import com.redwater.appmonitor.data.repository.BlogRepository
+import com.redwater.appmonitor.data.repository.QuotesRepository
 import com.redwater.appmonitor.logger.LogLevel
 import com.redwater.appmonitor.logger.Logger
 import io.grpc.android.BuildConfig
@@ -21,19 +20,30 @@ class AppMonitorApp: Application() {
         AppUsageStatsRepository(database.getAppPrefsDao())
     }
 
-    val overlayDataRepository by lazy {
-        OverlayDataRepository(database.getOverlayDataDao())
+//    val overlayDataRepository by lazy {
+//        OverlayDataRepository(database.getOverlayDataDao())
+//    }
+
+    val quotesRepository by lazy {
+        QuotesRepository(database.quotesDao())
+    }
+
+    val blogRepository by lazy {
+        BlogRepository(database.blogDao())
     }
 
     override fun onCreate() {
         super.onCreate()
-        if (BuildConfig.DEBUG){
-            Logger.setLogLevel(LogLevel.DEBUG)
-        }else{
-            Logger.setLogLevel(LogLevel.OFF)
-        }
 
-        Logger.d(TAG, "Build type: ${Build.TYPE}")
+        Logger.i(TAG, "Debug Build : ${BuildConfig.DEBUG}")
+        Logger.setLogLevel(LogLevel.DEBUG)
+//        if (BuildConfig.DEBUG){
+//            Logger.setLogLevel(LogLevel.DEBUG)
+//        }else{
+//            Logger.setLogLevel(LogLevel.OFF)
+//        }
+
+
 
     }
 

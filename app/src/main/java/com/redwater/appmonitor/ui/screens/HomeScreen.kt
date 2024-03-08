@@ -32,8 +32,8 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import com.ironsource.mediationsdk.IronSource
 import com.redwater.appmonitor.R
-import com.redwater.appmonitor.data.model.AppModel
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.ui.PermissionType
 import com.redwater.appmonitor.ui.components.ErrorDescriptor
@@ -42,7 +42,6 @@ import com.redwater.appmonitor.ui.components.PackageInfoCard
 import com.redwater.appmonitor.ui.components.PermissionAlertDialog
 import com.redwater.appmonitor.ui.components.TimeSelectionDialog
 import com.redwater.appmonitor.ui.components.UsageIndicator
-import com.redwater.appmonitor.utils.TimeFormatUtility
 import com.redwater.appmonitor.viewmodel.MainViewModel
 
 @Composable
@@ -51,17 +50,9 @@ fun HomeScreen(modifier: Modifier = Modifier,
                mainViewModel: MainViewModel,
                context: Context = LocalContext.current,
                onNavigateNext: (packageName: String)-> Unit,
-               onNavigateToPermissionScreen: ()-> Unit,
+               onNavigateToPermissionScreen: ()-> Unit
                ) {
     val TAG = "HomeScreen"
-    var selectedApps = remember {
-        mutableListOf<AppModel>()
-    }
-
-    var unselectedApps = remember {
-        mutableListOf<AppModel>()
-    }
-
     val uiStateUnselected = remember {
         mainViewModel.uiStateUnselected
     }
@@ -230,17 +221,20 @@ fun HomeScreen(modifier: Modifier = Modifier,
             }
 
             if (showTimePopUpForApp != null){
-                val timeList = TimeFormatUtility().thresholdTimeStringList
                 val appName = uiStateUnselected[showTimePopUpForApp!!].name
                 val descriptionWithAppName = stringResource(id = R.string.threshold_time_description).replace(oldValue = "##app_name##", newValue = appName)
                 TimeSelectionDialog(title = stringResource(id = R.string.threshold_time_title),
                     description = descriptionWithAppName,
-                    timeList = timeList,
+                    //timeList = timeList,
                     onSelection = {
                         mainViewModel.onAppSelected(
                             index = showTimePopUpForApp!!,
-                            timeModel = it,)
+                            durationModel = it,)
                         showTimePopUpForApp = null
+
+                        if (IronSource.isInterstitialReady()) IronSource.showInterstitial()
+
+
                     }) {
                     showTimePopUpForApp = null
                 }

@@ -10,7 +10,9 @@ import com.bumptech.glide.Glide
 import com.redwater.appmonitor.R
 import com.redwater.appmonitor.data.model.ImageOption
 
-class ImageViewAdapter(val context: Context, private val imageOptionList: List<ImageOption>, private val overlayViewActionListener: OverlayViewActionListener? = null): BaseAdapter() {
+class ImageViewAdapter(val context: Context,
+                       private val imageOptionList: List<ImageOption>,
+                       private val overlayViewActionListener: IOverlayViewActionListener? = null): BaseAdapter() {
 
     private val inflater:LayoutInflater = LayoutInflater.from(context)
     override fun getCount(): Int {

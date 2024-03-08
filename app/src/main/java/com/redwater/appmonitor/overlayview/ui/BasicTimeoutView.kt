@@ -1,11 +1,14 @@
 package com.redwater.appmonitor.overlayview.ui
 
+import android.app.Activity
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.TextView
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
+import com.ironsource.mediationsdk.ISBannerSize
 import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
 import com.patrykandpatrick.vico.core.axis.AxisPosition
 import com.patrykandpatrick.vico.core.axis.formatter.AxisValueFormatter
@@ -44,6 +47,8 @@ class BasicTimeoutView(context: Context,
 
     override fun inflateLayout() {
         inflate(context, R.layout.basic_timeout_layout, this)
+        //val bannerFooter = findViewById<FrameLayout>(R.id.banner_layout)
+        //setBannerAD(adLayout = bannerFooter, bannerSize = ISBannerSize.SMART)
     }
 
     override fun parseOverlayData(overlayPayloadData: String) {
@@ -80,9 +85,7 @@ class BasicTimeoutView(context: Context,
                     mOverlayViewActionListener?.onDismissOverlayAction(delayInMin = 10)
                 }
             }
-
         }
-
 
     }
 

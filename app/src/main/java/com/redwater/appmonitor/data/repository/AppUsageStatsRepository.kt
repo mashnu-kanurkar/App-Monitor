@@ -1,7 +1,6 @@
 package com.redwater.appmonitor.data.repository
 
 import android.app.usage.UsageEvents
-import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
@@ -9,10 +8,10 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.UserManager
-import androidx.compose.foundation.lazy.layout.IntervalList
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
-import com.redwater.appmonitor.data.AppPrefsDao
+import com.redwater.appmonitor.data.dao.AppPrefsDao
+import com.redwater.appmonitor.data.cache.UsageStatsCacheManager
 import com.redwater.appmonitor.data.model.AppDataFromSystem
 import com.redwater.appmonitor.data.model.AppModel
 import com.redwater.appmonitor.data.model.AppRoomModel
@@ -48,16 +47,10 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
             return@withContext appPrefsDao.getAllSelectedRecordsFlow()
         }
     }
-
-    suspend fun getAllRecords(): List<AppModel>{
-        Logger.d(TAG, "fetching all records")
-        return withContext(Dispatchers.IO){
-            val appRoomModelList = appPrefsDao.getAllRecords()
-            val appModelList = mutableListOf<AppModel>()
-            appRoomModelList.forEach {
-                appModelList.add(it.toAppModel())
-            }
-            return@withContext appModelList
+    suspend fun disableDNDFor(packageName: String){
+        Logger.d(TAG, "disabling dnd for $packageName")
+        withContext(Dispatchers.IO){
+            appPrefsDao.disableDNDFor(packageName)
         }
     }
     suspend fun getAllRecordsFlow(): Flow<List<AppRoomModel>> {
@@ -80,10 +73,13 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
             appPrefsDao.insert(appModel.toAppRoomModel())
         }
     }
-    suspend fun deletePrefsFor(packageName: String){
-        Logger.d(TAG, "deleting record for $packageName")
+
+    suspend fun insertPrefsFor(appModelList: List<AppModel>){
+        Logger.d(TAG, "inserting records $appModelList")
         withContext(Dispatchers.IO){
-            appPrefsDao.deleteAppPrefs(packageName)
+            appPrefsDao.insert(appModelList = appModelList.map {
+                it.toAppRoomModel()
+            })
         }
     }
 
@@ -101,6 +97,12 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
         }
     }
 
+    /**
+     * fetches usage stats using "queryUsageStats" API of UsageStatsManager
+     * @param packageName packagename of the app for which stats will be filtered
+     * @param context context
+     * @return list of [MonthlyStats]
+     */
     suspend fun getMonthlyAppUsage(packageName: String, context: Context): List<MonthlyStats> {
         return withContext(Dispatchers.Default){
             val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
@@ -123,19 +125,71 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
                     statsForPackage.add(MonthlyStats(it.packageName, it.firstTimeStamp, it.lastTimeStamp, it.totalTimeInForeground))
                 }
             }
+
             return@withContext statsForPackage
         }
     }
-    suspend fun getAppModelData(packageName: String? = null, context: Context): HashMap<String, AppModel> {
+
+    /**
+     * fetches usage stats by querying and processing all activity events.
+     * @param context context
+     * @return HashMap<[String], [AppModel]> of all apps
+     */
+    suspend fun getAppModelData(context: Context): HashMap<String, AppModel> {
+        val usageStatsCacheManager = UsageStatsCacheManager.getInstance()
+        val cachedUsageStats = usageStatsCacheManager.getCacheData()
+        if (cachedUsageStats != null){
+            Logger.d(TAG, "Using cached usage stats")
+            return cachedUsageStats
+        }
+        val appMetadata = getAppMetadata(context = context, packageName = null )
+        Logger.d(TAG, "queried app metadata: $appMetadata")
+        val stats = getAppUsageStats(context = context, appUsageMap = appMetadata,)
+        usageStatsCacheManager.store(stats)
+        return stats
+    }
+
+    /**
+     * fetches usage stats by querying and processing all activity events.
+     * @param packageName list of packagenames to filter out the result
+     * @param context context
+     * @return HashMap<[String], [AppModel]>
+     */
+    suspend fun getAppModelData(packageName: List<String>?, context: Context): HashMap<String, AppModel> {
+        val usageStatsCacheManager = UsageStatsCacheManager.getInstance()
+        val cachedUsageStats = usageStatsCacheManager.getCacheData()
+        if (cachedUsageStats != null){
+            Logger.d(TAG, "Using cached usage stats")
+            return cachedUsageStats
+        }
         val appMetadata = getAppMetadata(context = context, packageName = packageName)
         Logger.d(TAG, "queried app metadata: $appMetadata")
-        return getAppUsageStats(context = context, appUsageMap = appMetadata,)
+        val stats = getAppUsageStats(context = context, appUsageMap = appMetadata,)
+        // Do not try to cache this data as it will contain only one app's data
+        return stats
     }
-    private suspend fun getAppMetadata(context: Context, packageName: String?):HashMap<String, AppModel> {
+
+    private suspend fun getAppMetadata(context: Context, packageName: List<String>?):HashMap<String, AppModel> {
         return withContext(Dispatchers.Default){
             val allAppMap = hashMapOf<String, AppModel>()
             // one of the resolved info from the package manager
             val pm = context.packageManager
+            // searching launcher activities labeled to be home launcher
+            val homeLauncherIntent = Intent(Intent.ACTION_MAIN, null)
+            homeLauncherIntent.addCategory(Intent.CATEGORY_HOME)
+            val homeLauncherPackageList = mutableListOf<String>()
+            val homeLauncherAppInfo =  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                pm.queryIntentActivities(
+                    homeLauncherIntent,
+                    PackageManager.ResolveInfoFlags.of(0L)
+                )
+            } else {
+                pm.queryIntentActivities(homeLauncherIntent, 0)
+            }
+            Logger.d(TAG, "Home launchers $homeLauncherPackageList")
+            homeLauncherAppInfo.forEach {
+                homeLauncherPackageList.add(it.activityInfo.packageName)
+            }
             // searching main activities labeled to be launchers of the apps
             val mainIntent = Intent(Intent.ACTION_MAIN, null)
             mainIntent.addCategory(Intent.CATEGORY_LAUNCHER)
@@ -145,29 +199,42 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
                     PackageManager.ResolveInfoFlags.of(0L)
                 )
             } else {
-                pm.queryIntentActivities(mainIntent, 0)
+                pm.queryIntentActivities(mainIntent, PackageManager.MATCH_ALL)
             }
-            resolvedInfos.dropWhile { if(packageName != null) it.activityInfo.packageName != packageName else false }.forEach {resolveInfo->
+            resolvedInfos.dropWhile { if(packageName != null) it.activityInfo.packageName in packageName else false }.forEach { resolveInfo ->
                 val currentPackageName = resolveInfo.activityInfo.packageName
-                val resources =  pm.getResourcesForApplication(resolveInfo.activityInfo.applicationInfo)
-                val appName = if (resolveInfo.activityInfo.labelRes != 0) {
-                    // getting proper label from resources
-                    resources.getString(resolveInfo.activityInfo.labelRes)
-                } else {
-                    // getting it out of app info - equivalent to context.packageManager.getApplicationInfo
-                    resolveInfo.activityInfo.applicationInfo.loadLabel(pm).toString()
-                }
+                if (currentPackageName !in homeLauncherPackageList){
+                    val resources = pm.getResourcesForApplication(resolveInfo.activityInfo.applicationInfo)
+                    val appName = if (resolveInfo.activityInfo.labelRes != 0) {
+                        // getting proper label from resources
+                        resources.getString(resolveInfo.activityInfo.labelRes)
+                    } else {
+                        // getting it out of app info - equivalent to context.packageManager.getApplicationInfo
+                        resolveInfo.activityInfo.applicationInfo.loadLabel(pm).toString()
+                    }
 
-                val iconDrawable = resolveInfo.activityInfo.loadIcon(pm)
-                allAppMap[currentPackageName] =
-                    AppModel(packageName = currentPackageName, name = appName, icon = iconDrawable.toBitmap(48, 48).asImageBitmap())
-                if (packageName != null && currentPackageName == packageName){
-                    return@withContext allAppMap
+                    val iconDrawable = resolveInfo.activityInfo.loadIcon(pm)
+                    allAppMap[currentPackageName] =
+                        AppModel(
+                            packageName = currentPackageName,
+                            name = appName,
+                            icon = iconDrawable.toBitmap(48, 48).asImageBitmap()
+                        )
+                    if (packageName != null && currentPackageName in packageName) {
+                        return@withContext allAppMap
+                    }
                 }
             }
             return@withContext allAppMap
         }
     }
+
+    /**
+     * fetches usage stats for a particular app using by querying and processing all activity events.
+     * @param packageName list of packagenames to filter out the result
+     * @param context context
+     * @return [AppDataFromSystem]
+     */
     suspend fun getAppUsageStatsFor(packageName: String, context: Context):AppDataFromSystem?{
         val usageStatsMap = getAppUsageStats(context, hashMapOf(packageName to AppModel(packageName = packageName)))
         return if (usageStatsMap.isEmpty()){
@@ -215,7 +282,8 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
                 val event = UsageEvents.Event()
                 usageEvents.getNextEvent(event)
                 try {
-                    if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED || event.eventType == UsageEvents.Event.ACTIVITY_PAUSED) {
+                    if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED ||
+                        event.eventType == UsageEvents.Event.ACTIVITY_PAUSED) {
                         if (appUsageMap.containsKey(event.packageName).not()){
                             continue
                         }
@@ -225,12 +293,12 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
                             packageManager = packageManager
                         )
                         //do not add if it is system app or self app (App monitor)
-                        if (isSystemApp(applicationInfo = applicationInfo).not() && (event.packageName == (context.packageName)).not()){
+                        if (isSystemApp(applicationInfo = applicationInfo).not() || (event.packageName.contains("com.redwater.appmonitor")).not()){
                            allEventList.add(event)
-
                         }
                     }
                 }catch (packageNotFoundException: PackageManager.NameNotFoundException){
+                    packageNotFoundException.printStackTrace()
                     appUsageMap.remove(event.packageName)
                     continue
                 }
@@ -239,17 +307,18 @@ class AppUsageStatsRepository(private val appPrefsDao: AppPrefsDao) {
                     continue
                 }
             }
+
             for (index in 0 until (allEventList.size-1)){
                 //1 = resumed and 2 = paused
                 val e0 = allEventList[index]
                 val e1 = allEventList[(index + 1)]
-                Logger.d(TAG, "QA-sessions,${e0.packageName},${e0.className},${e0.eventType},${e0.timeStamp},${e1.packageName},${e1.className},${e1.eventType},${e1.timeStamp}")
+                //Logger.d(TAG, "QA-sessions,${e0.packageName},${e0.className},${e0.eventType},${e0.timeStamp},${e1.packageName},${e1.className},${e1.eventType},${e1.timeStamp}")
                 //for launchCount of apps in time range, count the number of sessions
                 //for UsageTime of apps in time range
 
                 if (e0.eventType == 1 && e1.eventType == 2
                     && e0.className.equals(e1.className)){
-                    val diff = e1.timeStamp - e0.timeStamp;
+                    val diff = e1.timeStamp - e0.timeStamp
                     //Logger.d(TAG, "package wise usage dist,${e0.packageName},${e0.eventType},${e0.timeStamp},${e1.packageName},${e1.eventType},${e1.timeStamp}")
                     appUsageMap[e0.packageName]?.let {
                             val oldSession = it.session

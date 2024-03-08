@@ -23,18 +23,20 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = velocity_primary,
-    secondary = velocity_secondary,
-    tertiary = velocity_tertiary,
+    primary = primary, //Appbar etc
+    secondary = secondary,
 
     //Other default colors to override
-    background = Color(0xFFFFFFFF),
-    surface = velocity_surface,
+    background = background,
+    surface = surface,//buttons etc
+    surfaceVariant = surfaceVariant,//card bg
+    secondaryContainer = secondaryContainer,//drop area
     onPrimary = Color.White,
     onSecondary = Color.White,
-    onTertiary = Color.Black,
+    onTertiary = Color.White,
     onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF000000),
+    onSurface = Color.White,
+    onSurfaceVariant = Color.Black
 
 )
 

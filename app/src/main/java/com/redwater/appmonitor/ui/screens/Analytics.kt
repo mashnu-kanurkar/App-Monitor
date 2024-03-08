@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedCard
@@ -30,6 +31,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import com.ironsource.mediationsdk.IronSource
 import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
 import com.redwater.appmonitor.R
@@ -60,7 +62,8 @@ fun AnalyticsScreen(
     lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
     analyticsViewModel: AnalyticsViewModel,
     packageName: String?,
-    context: Context = LocalContext.current, ) {
+    context: Context = LocalContext.current
+) {
 
     val TAG = "AnalyticsScreen"
     val uiState by analyticsViewModel.analyticsState
@@ -74,7 +77,7 @@ fun AnalyticsScreen(
         // Create an observer that triggers our remembered callbacks
         // for sending analytics events
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_CREATE) {
+            if (event == Lifecycle.Event.ON_START) {
                 Logger.d(TAG, "on create")
                 analyticsViewModel.getPermissionState(context = context)
                 packageName?.let {
@@ -93,7 +96,6 @@ fun AnalyticsScreen(
     Box(modifier = modifier.fillMaxSize()) {
 
         if (packageName == null) {
-
             ElevatedCard(
                 modifier = Modifier.fillMaxSize(),
                 shape = RoundedCornerShape(8.dp),
@@ -131,7 +133,6 @@ fun AnalyticsScreen(
                             analyticsViewModel.onAppPrefsClickEvent(
                                 packageName = packageName,
                                 isSelected = !uiState.appModel!!.isSelected,
-                                context = context
                             )
                         }
                     )
@@ -141,7 +142,7 @@ fun AnalyticsScreen(
                         .height(1.dp)
                         .fillMaxWidth())
                     if (sessionEntries.first.isEmpty().not()){
-                        ElevatedCard(modifier = Modifier.padding(4.dp, 8.dp),
+                        Card(modifier = Modifier.padding(4.dp, 8.dp),
                             shape = RoundedCornerShape(8.dp),
                             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 16.dp)) {
                             Text(modifier = Modifier
@@ -162,7 +163,7 @@ fun AnalyticsScreen(
                         .height(1.dp)
                         .fillMaxWidth())
                     if (monthlyStatsEntries.first.isEmpty().not()){
-                        ElevatedCard(modifier = Modifier.padding(4.dp, 8.dp),
+                        Card(modifier = Modifier.padding(4.dp, 8.dp),
                             shape = RoundedCornerShape(8.dp),
                             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 16.dp)) {
                             Text(modifier = Modifier
@@ -186,7 +187,7 @@ fun AnalyticsScreen(
 
                 } else {
                     if (uiState.dataLoadingState.show.not()){
-                        ElevatedCard(
+                        Card(
                             shape = RoundedCornerShape(8.dp),
                             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 16.dp)
                         ) {
@@ -202,7 +203,6 @@ fun AnalyticsScreen(
                 LoadingIndicator(message = uiState.dataLoadingState.message)
             }
             if (uiState.showTimePopUp) {
-                val timeList = TimeFormatUtility().thresholdTimeStringList
                 val descriptionWithAppName =
                     stringResource(id = R.string.threshold_time_description).replace(
                         oldValue = "##app_name##",
@@ -210,15 +210,16 @@ fun AnalyticsScreen(
                     )
                 TimeSelectionDialog(title = stringResource(id = R.string.threshold_time_title),
                     description = descriptionWithAppName,
-                    timeList = timeList,
+                    //timeList = timeList,
                     onSelection = {
                         Logger.d(TAG, "Selected time $it")
                         analyticsViewModel.onTimeSelection(
                             isDismiss = false,
-                            timeModel = it,
+                            durationModel = it,
                             context = context.applicationContext,
                             packageName = packageName
                         )
+                        if (IronSource.isInterstitialReady()) IronSource.showInterstitial()
                     }) {
                     analyticsViewModel.onTimeSelection(isDismiss = true)
                 }

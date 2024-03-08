@@ -1,6 +1,7 @@
 package com.redwater.appmonitor.utils
 
 import androidx.compose.ui.graphics.Color
+import kotlin.random.Random
 
 fun hexStringToColorValue(hex: String): Color {
     val hexValue = hex.removePrefix("#")
@@ -14,4 +15,21 @@ fun hexStringToColorValue(hex: String): Color {
     } else {
         throw IllegalArgumentException("Invalid hexadecimal color string")
     }
+}
+
+fun getRandomColorList(size: Int): List<Int>{
+    val random = Random
+    val colorList = mutableListOf<Int>()
+    for (i in 0..size){
+        val color = android.graphics.Color.argb(255,
+            random.nextInt(256),
+            random.nextInt(256),
+            random.nextInt(256))
+        colorList.add(color)
+    }
+    return colorList
+}
+
+fun getColorsForPieChart():List<Color>{
+    return listOf(Color.Red, Color.Blue, Color.Green, Color.Yellow, Color.Magenta, Color.Cyan)
 }

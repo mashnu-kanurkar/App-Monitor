@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.redwater.appmonitor.data.model.AppModel
 import com.redwater.appmonitor.data.model.MonthlyStats
 import com.redwater.appmonitor.data.model.TimeModel
 import com.redwater.appmonitor.data.model.toAppModel
@@ -68,12 +67,16 @@ class AnalyticsViewModel(private val repository: AppUsageStatsRepository): ViewM
             Logger.d(TAG, "changing loader state to true")
             analyticsState.value = analyticsState.value.copy(dataLoadingState = DataLoadingState(show = true, message = "Analysing data"))
             Logger.d(TAG, "changed loader state true")
-            var appUsage = repository.getAppModelData(packageName = packageName, context = context.applicationContext)[packageName]
+            var appUsage = repository.getAppModelData(packageName = listOf(packageName) , context = context.applicationContext)[packageName]
             Logger.d(TAG, "app model for $packageName : $appUsage")
             repository.getSavedPrefsFor(packageName = packageName).collectLatest {
                 Logger.d(TAG, "collected app data: $it")
                 val savedPrefs = it?.toAppModel()
-                appUsage = appUsage?.copy(isSelected = savedPrefs?.isSelected?: false, thresholdTime = savedPrefs?.thresholdTime, delay = savedPrefs?.delay?:0)
+                appUsage = appUsage?.copy(isSelected = savedPrefs?.isSelected?: false,
+                    thresholdTime = savedPrefs?.thresholdTime,
+                    delay = savedPrefs?.delay?:0,
+                    dndStartTime = savedPrefs?.dndStartTime,
+                    dndEndTime = savedPrefs?.dndEndTime)
                 Logger.d(TAG, "changing loader state to true")
                 analyticsState.value = analyticsState.value.copy(appModel = appUsage, dataLoadingState = DataLoadingState(show = false, message = null))
                 Logger.d(TAG, "changed loader state false")
@@ -96,7 +99,7 @@ class AnalyticsViewModel(private val repository: AppUsageStatsRepository): ViewM
         }
     }
 
-    fun onAppPrefsClickEvent(packageName: String, isSelected: Boolean, context: Context){
+    fun onAppPrefsClickEvent(packageName: String, isSelected: Boolean){
         Logger.d(TAG, "isSelected: $isSelected")
         if (permissionStateMap.get(PermissionType.overlayPermission)?.hasPermission == false){
             analyticsState.value = analyticsState.value.copy(permissionPopUpState = PermissionPopUpState(show = true, permissionType = PermissionType.overlayPermission))
@@ -122,47 +125,41 @@ class AnalyticsViewModel(private val repository: AppUsageStatsRepository): ViewM
         }else{
             if (packageName != null && thresholdTimeInString != null && context != null){
                 analyticsState.value = analyticsState.value.copy(showTimePopUp = false)
-                changeAppPrefs(packageName = packageName, thresholdTimeInString = thresholdTimeInString, context = context)
+                changeAppPrefs(thresholdTimeInString = thresholdTimeInString)
             }
         }
     }
 
-    fun onTimeSelection(isDismiss: Boolean = false, packageName: String? = null, timeModel: TimeModel?, context: Context? = null){
+    fun onTimeSelection(isDismiss: Boolean = false, packageName: String? = null, durationModel: TimeModel?, context: Context? = null){
         if (isDismiss){
             analyticsState.value = analyticsState.value.copy(showTimePopUp = false)
         }else{
-            if (packageName != null && timeModel != null && context != null){
+            if (packageName != null && durationModel != null && context != null){
                 analyticsState.value = analyticsState.value.copy(showTimePopUp = false)
-                changeAppPrefs(packageName = packageName, timeModel = timeModel, context = context)
+                changeAppPrefs(durationModel = durationModel)
             }
         }
     }
 
-    private fun changeAppPrefs(packageName: String, thresholdTimeInString: String, context: Context){
+    private fun changeAppPrefs(thresholdTimeInString: String){
         viewModelScope.launch {
             val thresholdTimeInMin: Short = TimeFormatUtility().getTimeInMin(thresholdTimeInString = thresholdTimeInString)
             val appInfo =  analyticsState.value.appModel
             if (appInfo != null){
                 repository.insertPrefsFor(
-                    AppModel(packageName = appInfo.packageName,
-                        name = appInfo.name,
-                        isSelected = true,
-                        thresholdTime = thresholdTimeInMin)
+                    appInfo.copy(isSelected = true, thresholdTime = thresholdTimeInMin)
                 )
             }
         }
     }
 
-    private fun changeAppPrefs(packageName: String, timeModel: TimeModel, context: Context){
+    private fun changeAppPrefs(durationModel: TimeModel){
         viewModelScope.launch {
-            val thresholdTimeInMin: Short = TimeFormatUtility().getTimeInMin(timeModel = timeModel)
+            val thresholdTimeInMin: Short = TimeFormatUtility().getTimeInMin(timeModel = durationModel)
             val appInfo =  analyticsState.value.appModel
             if (appInfo != null){
                 repository.insertPrefsFor(
-                    AppModel(packageName = appInfo.packageName,
-                        name = appInfo.name,
-                        isSelected = true,
-                        thresholdTime = thresholdTimeInMin)
+                    appInfo.copy(isSelected = true, thresholdTime = thresholdTimeInMin)
                 )
             }
         }

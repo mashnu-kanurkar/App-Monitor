@@ -5,9 +5,8 @@ import org.junit.Assert
 import org.junit.Test
 
 class OverlayDataTest {
-
     @Test
-    fun generateRandomQuestion(){
+    fun generateRandomQuestionTest(){
         val def = DefaultMathPuzzle()
         val s = def.generateQuestion()
         println(s)

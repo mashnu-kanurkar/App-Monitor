@@ -1,9 +1,11 @@
 package com.redwater.appmonitor.ui
 
 import android.content.Context
-import androidx.compose.ui.graphics.ImageBitmap
+import com.redwater.appmonitor.Constants
 import com.redwater.appmonitor.R
 import com.redwater.appmonitor.data.model.AppModel
+import com.redwater.appmonitor.data.model.Blog
+import com.redwater.appmonitor.data.model.DNDTime
 
 
 object PermissionType{
@@ -51,3 +53,17 @@ data class Error(val show: Boolean, val errorMsg: String? = null)
 data class PermissionPopUpState(val show: Boolean, val permissionType: Int? = null)
 
 data class DataLoadingState(val show: Boolean, val message: String? = null)
+
+data class DashboardState(
+    val quote: String = Constants.defQuote,
+    val appUsageData: HashMap<String, Long>? = null,
+    val blog: Blog? = null,
+)
+
+data class DNDUIState(
+    val dndList: List<DNDTime> = listOf(),
+    val showTimePopUp: Boolean = false,
+    val appModelList: List<AppModel?> = emptyList(),
+    val dataLoadingState: DataLoadingState = DataLoadingState(show = true),
+    val showError: Error = Error(show = false),
+)

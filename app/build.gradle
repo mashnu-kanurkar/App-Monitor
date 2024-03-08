@@ -5,6 +5,8 @@ plugins {
     id 'com.google.gms.google-services'
 }
 
+
+
 android {
     namespace 'com.redwater.appmonitor'
     compileSdk 33
@@ -51,6 +53,19 @@ android {
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+
+    ksp {
+        arg(new RoomSchemaArgProvider(new File(projectDir, "schemas")))
+    }
+
+    signingConfigs{
+        release{
+            storeFile file("../keystore.jks")
+            storePassword System.getenv("RELEASE_KEYSTORE_PASSWORD")
+            keyAlias System.getenv("RELEASE_KEYSTORE_ALIAS")
+            keyPassword System.getenv("RELEASE_KEY_PASSWORD")
         }
     }
 }
@@ -105,7 +120,22 @@ dependencies {
     implementation 'com.patrykandpatrick.vico:views:1.8.0'
     implementation 'com.patrykandpatrick.vico:compose-m3:1.8.0'
 
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:3.0-alpha-1'
+    //ironSource
+    implementation 'com.ironsource.sdk:mediationsdk:7.7.0'
+    // ironSource Ad Quality SDK
+    implementation 'com.ironsource:adqualitysdk:7.16.0'
+
+    //Google play services
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.google.android.gms:play-services-appset:16.0.0'
+    implementation 'com.google.android.gms:play-services-ads-identifier:18.0.1'
+    implementation 'com.google.android.gms:play-services-basement:18.1.0'
+    // Add Facebook Network
+    implementation 'com.ironsource.adapters:facebookadapter:4.3.45'
+    implementation 'com.facebook.android:audience-network-sdk:6.16.0'
+
+
+    //debugImplementation 'com.squareup.leakcanary:leakcanary-android:3.0-alpha-1'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
@@ -114,4 +144,22 @@ dependencies {
     androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
+}
+
+class RoomSchemaArgProvider implements CommandLineArgumentProvider {
+
+    @InputDirectory
+    @PathSensitive(PathSensitivity.RELATIVE)
+    File schemaDir
+
+    RoomSchemaArgProvider(File schemaDir) {
+        this.schemaDir = schemaDir
+    }
+
+    @Override
+    Iterable<String> asArguments() {
+        // Note: If you're using KAPT and javac, change the line below to
+        // return ["-Aroom.schemaLocation=${schemaDir.path}".toString()].
+        return ["room.schemaLocation=${schemaDir.path}".toString()]
+    }
 }

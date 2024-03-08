@@ -1,12 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/viridian">
 
-    <GridView
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:numColumns="2" />
-</LinearLayout>
+        android:id="@+id/text1"
+        android:text="This is test layout"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="This is test layout"
+        android:layout_below="@id/text1"/>
+
+    <FrameLayout
+        android:id="@+id/banner_footer"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:background="@color/black">
+
+    </FrameLayout>
+</RelativeLayout>

@@ -7,7 +7,7 @@ import kotlin.random.Random
 
 class DefaultMathPuzzle {
 
-    private val difficulty: Int = Random.nextInt(1, 3)// defines number of operations, including = operator
+    private val difficulty: Int = Random.nextInt(1, 3)// define number of operations, including = operator
     private val time = difficulty*+3 //in sec
 
     private fun getOperators(): List<Operator>{

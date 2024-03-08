@@ -7,12 +7,10 @@ import androidx.core.content.ContextCompat
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.redwater.appmonitor.AppMonitorApp
 import com.redwater.appmonitor.Constants
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.permissions.PermissionManager
-import com.redwater.appmonitor.workmanager.FirebaseSyncWorker
 import com.redwater.appmonitor.workmanager.ForegroundAppWorker
 import java.util.concurrent.TimeUnit
 
@@ -46,16 +44,16 @@ object ServiceManager {
                         foregroundAppWorkRequest
                     )
 
-                val firebaseSyncWorkRequest = PeriodicWorkRequestBuilder<FirebaseSyncWorker>(
-                    Constants.firebaseSyncWorkerPeriodInHour,
-                    TimeUnit.MINUTES
-                ).build()
-                WorkManager.getInstance(context.applicationContext)
-                    .enqueueUniquePeriodicWork(
-                        Constants.firebaseSyncWorkerTag,
-                        ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
-                        firebaseSyncWorkRequest
-                    )
+//                val firebaseSyncWorkRequest = PeriodicWorkRequestBuilder<FirebaseSyncWorker>(
+//                    Constants.firebaseSyncWorkerPeriodInHour,
+//                    TimeUnit.MINUTES
+//                ).build()
+//                WorkManager.getInstance(context.applicationContext)
+//                    .enqueueUniquePeriodicWork(
+//                        Constants.firebaseSyncWorkerTag,
+//                        ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
+//                        firebaseSyncWorkRequest
+//                    )
             }
         }
     }

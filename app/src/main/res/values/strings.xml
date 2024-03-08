@@ -2,6 +2,7 @@
     <string name="app_name">App Monitor</string>
     <string name="analytics">Analytics</string>
     <string name="home_screen">Home Screen</string>
+    <string name="dnd_screen">DND Setup</string>
     <string name="permission">Permission</string>
     <string name="app_icon">App icon</string>
     <string name="back_button">Back</string>
@@ -32,9 +33,11 @@
     <string name="close_app">Close App</string>
     <string name="open_app">Open App</string>
     <string name="exceed_usage">Today\'s usage limit is exceeded</string>
+    <string name="dnd_usage">You can not use this app within active DND time. Please come back after ##dndEndTime##</string>
     <string name="set_limit">Set limit: ##limit##</string>
     <string name="total_usage">Total usage: ##usage##</string>
     <string name="delay_minutes">Delay ##delayMin## min</string>
+    <string name="change_dnd">Change DND hours</string>
     <string name="game_title">Win this simple game to unlock the app</string>
     <string name="num_count_game_info">Your aim is to achieve the number ##target## by selecting any number in a range of ##range_low## to ##range_high##.</string>
     <string name="chart_type"> Chart: ##chartType##</string>
@@ -56,5 +59,28 @@
     <string name="session_id">Session ID</string>
     <string name="session_length">Session Length</string>
 <!--    -->
+
+<!--    Dashboard-->
+    <string name="quote_title">Quote of the day</string>
+    <string name="app_usage_breakdown">Major app usage breakdown</string>
+    <string name="blog_header">Keep yourself motivated</string>
+    <string name="read_more">read more</string>
+    <string name="dnd_header">Do not disturb mode</string>
+    <string name="dnd_description">You can set the DND mode for any application, so that you can avoid the app usage within that time</string>
+    <string name="dnd_button">Set DND</string>
+    <string name="usage_limit_header">Limit app usage</string>
+    <string name="usage_limit_description">You can set the usage limit for any application, so that you can limit your daily app usage time</string>
+    <string name="usage_limit_button">Set usage limit</string>
+     
+<!--    DND screen-->
+    <string name="dnd_information">Select the DND period and the applications. We will give you a prompt whenever you try to access these applications within DND time</string>
+    <string name="add_dnd_period">Add another DND</string>
+    <string name="dnd_container_title">DND container</string>
+    <string name="dnd_instruction">To remove from DND time, long press on the app icon, then drag and drop to Non-DND apps container</string>
+    <string name="non_dnd_container_title">Apps list</string>
+    <string name="non_dnd_instruction">Long press on the app icon then drag and drop it to the above container.</string>
+    <string name="dnd_select">Select DND time</string>
+    <string name="dnd_error">Start time and end time can not be same</string>
+    <string name="save_dnd">Save DND configuration</string>
 
 </resources>

@@ -2,6 +2,7 @@
 <resources>
 
     <style name="Theme.AppMonitor" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/background</item>
         <item name="fontFamily">@font/roboto_light</item>
         <item name="android:fontFamily">@font/roboto_light</item>
         <item name="colorPrimary">@color/violet</item>
@@ -21,6 +22,5 @@
         <item name="colorOnSecondaryContainer">#07201a</item>
         <item name="colorSurface">#fafdfa</item>
         <item name="colorOnSurface">#191c1b</item>
-
     </style>
 </resources>

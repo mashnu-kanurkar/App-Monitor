@@ -1,16 +1,14 @@
-package com.redwater.appmonitor.data
+package com.redwater.appmonitor.data.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
 import com.redwater.appmonitor.Constants
 import com.redwater.appmonitor.data.model.OverlayPayload
 
 @Dao
 interface OverlayDataDao {
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(overlayPayload: OverlayPayload)
 
@@ -31,5 +29,8 @@ interface OverlayDataDao {
 
     @Query("SELECT CASE COUNT(*) WHEN 0 THEN 71 ELSE COUNT(*)*100/( SELECT COUNT(*) FROM ${Constants.overlayDataTable} WHERE ${Constants.OverlayDataColumns.type} =:type) END FROM ${Constants.overlayDataTable} WHERE ${Constants.OverlayDataColumns.isUsed} =1")
     fun getUsagePercentageOf(type: String): Int
+
+    @Query("SELECT * FROM ${Constants.overlayDataTable} WHERE ${Constants.OverlayDataColumns.type} =:type ORDER BY RANDOM() LIMIT 1")
+    fun getRandomEntry(type: String): OverlayPayload?
 
 }
