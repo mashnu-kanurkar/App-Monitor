@@ -1,5 +1,6 @@
 package com.redwater.appmonitor.ui.screens
 
+import GIFImageLoader
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,6 +30,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.viewmodel.PermissionViewModel
 import com.redwater.appmonitor.R
@@ -138,42 +141,53 @@ fun NotificationPermissionContent(onClickAllow: ()-> Unit) {
 
 @Composable
 fun UsageMonitorPermissionContent(onClickAllow: ()-> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp, 0.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Image(modifier = Modifier.padding(4.dp, 16.dp),painter = painterResource(id = R.drawable.analytics_0), contentDescription = "bell")
-        Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.permission_required_title), style = MaterialTheme.typography.titleLarge)
-        Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.usage_data_permission_details))
-        Spacer(modifier = Modifier.height(48.dp))
-        Button(onClick = onClickAllow) {
-            Text(modifier = Modifier.padding(16.dp, 4.dp), text = stringResource(id = R.string.button_allow))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp, 0.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            //Image(modifier = Modifier.padding(4.dp, 16.dp),painter = painterResource(id = R.drawable.analytics_0), contentDescription = "bell")
+            Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.permission_required_title), style = MaterialTheme.typography.titleLarge)
+            Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.usage_data_permission_details))
+            Spacer(modifier = Modifier.height(48.dp))
+            Button(onClick = onClickAllow) {
+                Text(modifier = Modifier.padding(16.dp, 4.dp), text = stringResource(id = R.string.button_allow))
+            }
+
+            GIFImageLoader(
+                modifier = Modifier.padding(8.dp),
+                context = LocalContext.current,
+                resourceId = R.drawable.usage_data_access_guide)
         }
-    }
+
 }
 
 @Composable
 fun OverlayPermissionContent(onClickAllow: ()-> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp, 0.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Image(modifier = Modifier.padding(4.dp, 16.dp),painter = painterResource(id = R.drawable.overlay_0), contentDescription = "bell")
-        Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.permission_required_title), style = MaterialTheme.typography.titleLarge)
-        Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.overlay_permission_details))
-        Spacer(modifier = Modifier.height(48.dp))
-        Button(onClick = onClickAllow) {
-            Text(modifier = Modifier.padding(16.dp, 4.dp), text = stringResource(id = R.string.button_allow))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp, 0.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            //Image(modifier = Modifier.padding(4.dp, 16.dp),painter = painterResource(id = R.drawable.overlay_0), contentDescription = "bell")
+            Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.permission_required_title), style = MaterialTheme.typography.titleLarge)
+            Text(modifier = Modifier.padding(4.dp),text = stringResource(id = R.string.overlay_permission_details))
+            Spacer(modifier = Modifier.height(48.dp))
+            Button(onClick = onClickAllow) {
+                Text(modifier = Modifier.padding(16.dp, 4.dp), text = stringResource(id = R.string.button_allow))
+            }
+            GIFImageLoader(
+                modifier = Modifier.padding(8.dp),
+                context = LocalContext.current,
+                resourceId = R.drawable.overlay_guide)
         }
-    }
+
 }
 
 @Preview

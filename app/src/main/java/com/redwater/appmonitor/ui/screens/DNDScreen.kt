@@ -124,7 +124,7 @@ fun DNDScreen(dndViewModel: DNDViewModel,
                 AppListContainer(
                     title = stringResource(id = R.string.non_dnd_container_title),
                     instruction = stringResource(id = R.string.non_dnd_instruction),
-                    height = 288.dp,
+                    height = 720.dp,
                     appModelList = unSelectedApps,
                     context = context
                 )

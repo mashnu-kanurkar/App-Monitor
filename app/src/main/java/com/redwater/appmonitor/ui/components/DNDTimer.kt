@@ -270,45 +270,42 @@ fun DNDAppContainer(appModelList: List<AppModel>,
 }
 
 @Composable
-fun AppListContainer(title: String,
+fun ColumnScope.AppListContainer(title: String,
                      instruction: String,
-                     height: Dp = 216.dp,
+                     height: Dp = 720.dp,
                      appModelList: List<AppModel>,
                      context: Context,) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        RWHeaderText(text = title, color = MaterialTheme.colorScheme.onBackground)
-        RWItalicText(text = instruction, color = MaterialTheme.colorScheme.onBackground)
-        Divider(modifier = Modifier
-            .fillMaxWidth()
-            .height(1.dp))
-        LazyVerticalGrid(
-            modifier = Modifier.height(height),
-            columns = GridCells.Fixed(4),
-            horizontalArrangement = Arrangement.Start,
-            verticalArrangement = Arrangement.Top
-        ){
-            items(appModelList){
-                Logger.d("App container", "$it")
-                AppIconHolder(appModel = it, context = context)
-            }
+    RWHeaderText(text = title, color = MaterialTheme.colorScheme.onBackground)
+    RWItalicText(text = instruction, color = MaterialTheme.colorScheme.onBackground)
+    Divider(modifier = Modifier
+        .fillMaxWidth()
+        .height(1.dp))
+    LazyVerticalGrid(
+        modifier = Modifier.height(height),
+        columns = GridCells.Fixed(4),
+        horizontalArrangement = Arrangement.Start,
+        verticalArrangement = Arrangement.Top
+    ){
+        items(appModelList){
+            Logger.d("App container", "$it")
+            AppIconHolder(appModel = it, context = context)
         }
-        }
+    }
     }
 
 
 @Composable
 fun AppIconHolder(appModel: AppModel, context: Context) {
-    Card(elevation = CardDefaults.cardElevation(10.dp),
+    Card(elevation = CardDefaults.cardElevation(10.dp,),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .padding(8.dp)
             .fillMaxHeight(),) {
-        DragTarget(modifier = Modifier.fillMaxWidth(), dataToDrop = appModel) {
+        DragTarget(modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally), dataToDrop = appModel) {
             Image(modifier = Modifier
                 .padding(4.dp)
                 .size(52.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .align(Alignment.CenterHorizontally),
+                .clip(RoundedCornerShape(2.dp)),
                 bitmap = appModel.icon?: context.applicationContext.packageManager.getApplicationIcon(context.applicationContext.packageName).toBitmap(48, 48).asImageBitmap(),
                 contentDescription = "app icon")
         }

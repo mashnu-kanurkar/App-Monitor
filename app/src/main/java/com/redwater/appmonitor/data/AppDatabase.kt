@@ -1,6 +1,7 @@
 package com.redwater.appmonitor.data
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -16,7 +17,7 @@ import com.redwater.appmonitor.data.model.Quote
 
 
 @Database(entities = [AppRoomModel::class, OverlayPayload::class, Quote::class, Blog::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
     )
 abstract class AppDatabase: RoomDatabase() {
@@ -37,8 +38,10 @@ abstract class AppDatabase: RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     applicationContext,
                     AppDatabase::class.java,
-                    Constants.appDatabase
-                ).build()
+                    Constants.appDatabase)
+                    .fallbackToDestructiveMigration()
+                    //.addMigrations(migration1to2)
+                    .build()
 
                 INSTANCE = instance
                 instance
@@ -46,3 +49,4 @@ abstract class AppDatabase: RoomDatabase() {
         }
     }
 }
+

@@ -83,4 +83,6 @@
     <string name="dnd_error">Start time and end time can not be same</string>
     <string name="save_dnd">Save DND configuration</string>
 
+<!--    Push notifications-->
+    <string name="ct_fcm_fallback_notification_channel_label">Miscellaneous</string>
 </resources>

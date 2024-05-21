@@ -4,5 +4,6 @@ interface IOverlayHandler: IOverlayViewActionListener {
     fun showOverlay()
     fun hideOverlay()
     fun delayedOverlayTask(delayInMin: Long, isUserInitiatedDelay: Boolean)
+    fun terminateForegroundMonitorScope()
 
 }

@@ -1,6 +1,7 @@
 package com.redwater.appmonitor.permissions
 
 import android.Manifest
+import android.app.Activity
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
