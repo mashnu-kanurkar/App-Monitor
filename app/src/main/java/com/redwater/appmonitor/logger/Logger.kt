@@ -1,10 +1,11 @@
 package com.redwater.appmonitor.logger
 
 import android.util.Log
+import java.lang.Exception
 
 object Logger {
 
-    private var logLevel = LogLevel.OFF
+    private var logLevel = LogLevel.DEBUG
 
     fun setLogLevel(level: LogLevel) {
         logLevel = level
@@ -34,9 +35,9 @@ object Logger {
         }
     }
 
-    fun e(tag: String?, message: String) {
+    fun e(tag: String?, message: String, throwable: Throwable? = null) {
         if (logLevel <= LogLevel.ERROR) {
-            Log.e(tag, message)
+            Log.e(tag, message, throwable)
         }
     }
 }

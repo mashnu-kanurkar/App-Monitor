@@ -7,6 +7,7 @@ import com.redwater.appmonitor.data.repository.BlogRepository
 import com.redwater.appmonitor.data.repository.QuotesRepository
 import com.redwater.appmonitor.logger.LogLevel
 import com.redwater.appmonitor.logger.Logger
+import com.redwater.appmonitor.service.RemoteMessagingService
 import io.grpc.android.BuildConfig
 
 class AppMonitorApp: Application() {
@@ -34,9 +35,9 @@ class AppMonitorApp: Application() {
 
     override fun onCreate() {
         super.onCreate()
+        Logger.d(TAG, "Debug Build : ${BuildConfig.DEBUG}")
+        //Logger.setLogLevel(LogLevel.OFF)
 
-        Logger.i(TAG, "Debug Build : ${BuildConfig.DEBUG}")
-        Logger.setLogLevel(LogLevel.DEBUG)
 //        if (BuildConfig.DEBUG){
 //            Logger.setLogLevel(LogLevel.DEBUG)
 //        }else{

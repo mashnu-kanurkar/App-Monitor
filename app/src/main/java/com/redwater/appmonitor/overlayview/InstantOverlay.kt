@@ -11,7 +11,9 @@ import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.overlayview.ui.BasicTimeoutView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -82,6 +84,13 @@ class InstantOverlay internal constructor(private val applicationContext: Contex
             } else {
                 showOverlay()
             }
+        }
+    }
+
+    override fun terminateForegroundMonitorScope(){
+        if (this::foregroundTimeMonitorScope.isInitialized){
+            Logger.d(TAG, "canceling foregroundTimeMonitor scope")
+            foregroundTimeMonitorScope.cancel()
         }
     }
 

@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "118206927932",
-    "project_id": "app-monitor-73312",
-    "storage_bucket": "app-monitor-73312.appspot.com"
+    "project_number": "315745881812",
+    "project_id": "app-monitor-bfb1e",
+    "storage_bucket": "app-monitor-bfb1e.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:118206927932:android:b3d124cfbc962583d01f39",
+        "mobilesdk_app_id": "1:315745881812:android:afd515f5df802c3b1e7541",
         "android_client_info": {
           "package_name": "com.redwater.appmonitor"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCMnUY6x_mVbJ45Fytvwl6JHXoKl8kSbbA"
+          "current_key": "AIzaSyAtg5paFLeoQ6CuxI6IDXJkfU9cjWkgk2I"
         }
       ],
       "services": {

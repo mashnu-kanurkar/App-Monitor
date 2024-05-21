@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "fa227a7a668d9dfc3dcc86ce664991cc",
+    "identityHash": "bcbd304c2fef55fa98a48b9255b59aff",
     "entities": [
       {
         "tableName": "app_prefs",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`package` TEXT NOT NULL, `name` TEXT NOT NULL, `is_selected` INTEGER NOT NULL, `usage_time` INTEGER NOT NULL, `thr_time` INTEGER, `delay` INTEGER NOT NULL, PRIMARY KEY(`package`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`package` TEXT NOT NULL, `name` TEXT NOT NULL, `is_selected` INTEGER NOT NULL, `thr_time` INTEGER, `delay` INTEGER NOT NULL, `dnd_start_time` TEXT, `dnd_end_time` TEXT, PRIMARY KEY(`package`))",
         "fields": [
           {
             "fieldPath": "packageName",
@@ -27,12 +27,6 @@
             "notNull": true
           },
           {
-            "fieldPath": "usageTime",
-            "columnName": "usage_time",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
             "fieldPath": "thresholdTime",
             "columnName": "thr_time",
             "affinity": "INTEGER",
@@ -43,6 +37,18 @@
             "columnName": "delay",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "dndStartTime",
+            "columnName": "dnd_start_time",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "dndEndTime",
+            "columnName": "dnd_end_time",
+            "affinity": "TEXT",
+            "notNull": false
           }
         ],
         "primaryKey": {
@@ -202,7 +208,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fa227a7a668d9dfc3dcc86ce664991cc')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bcbd304c2fef55fa98a48b9255b59aff')"
     ]
   }
 }

@@ -9,6 +9,7 @@ import com.redwater.appmonitor.logger.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -80,6 +81,13 @@ class DNDOverlay internal constructor(private val applicationContext: Context,
             }
         }
     }
+
+    override fun terminateForegroundMonitorScope() {
+        if (this::foregroundTimeMonitorScope.isInitialized){
+            Logger.d(TAG, "canceling foregroundTimeMonitor scope")
+            foregroundTimeMonitorScope.cancel()
+        }
+    }
     override fun onDismissOverlayAction(delayInMin: Short) {
         goToHome()
     }
@@ -91,7 +99,6 @@ class DNDOverlay internal constructor(private val applicationContext: Context,
 
     override fun onRendered(success: Boolean) {
         Logger.d(TAG, "DND overlay rendered successfully")
-
     }
 
 }

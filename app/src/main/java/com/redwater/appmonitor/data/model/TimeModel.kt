@@ -46,8 +46,18 @@ fun String.toTimeModel(): TimeModel?{
 fun createDNDKey(startTime: TimeModel, endTime: TimeModel): String{
     return "${startTime.toFormattedString()}_${endTime.toFormattedString()}"
 }
+
 fun createDNDKey(startTime: String, endTime: String): String{
     return "${startTime}_${endTime}"
+}
+fun updateDNDKey(oldKey: String, timeModel: TimeModel, dndTimeType: DNDTimeType): String{
+    return if (dndTimeType == DNDTimeType.START){
+        val endTimeString = oldKey.split("_")[1]
+        "${timeModel.toFormattedString()}_$endTimeString"
+    }else{
+        val startTimeString = oldKey.split("_")[0]
+        "${timeModel.toFormattedString()}_$startTimeString"
+    }
 }
 fun getTimeModelFromKey(dndKey: String): Pair<TimeModel, TimeModel>?{
     Logger.d("getTimeModelFromKey", "dndKey = ${dndKey}")

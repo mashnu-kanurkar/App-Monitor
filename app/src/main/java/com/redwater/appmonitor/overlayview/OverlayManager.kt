@@ -19,6 +19,7 @@ class OverlayManager(val applicationContext: Context) {
     private val TAG = this::class.simpleName
     private lateinit var foregroundTimeMonitorScope: CoroutineScope
     private val overlayProvider: OverlayProvider = OverlayProvider(applicationContext)
+    private var currentOverlay: IOverlayHandler? = null
     private var lastForegroundPackage = ""
     suspend fun onAppForeground(foregroundAppPackage: String,
                                         prefsRepository: AppUsageStatsRepository,
@@ -28,6 +29,7 @@ class OverlayManager(val applicationContext: Context) {
             lastForegroundPackage = foregroundAppPackage
             if (lastBackgroundPackage != foregroundAppPackage){
                 Logger.d(TAG, "trying to cancel foregroundTimeMonitor scope")
+
                 terminateForegroundTimeMonitor()
             }
             //try to hide previous overlay, if any
@@ -44,12 +46,13 @@ class OverlayManager(val applicationContext: Context) {
                     val dateFormat = SimpleDateFormat("hh:mm a", Locale.US)
                     val timeToCheck = dateFormat.format(currentTime)
                     if (TimeFormatUtility().isWithinDNDTime(timeToCheckStr = timeToCheck, startTimeStr = dndStart, endTimeStr = dndEnd)){
-                        overlayProvider.buildOverlayUI(packageName = foregroundAppPackage, dndStartTime = dndStart, dndEndTime = dndEnd)?.showOverlay()
+                        currentOverlay = overlayProvider.buildOverlayUI(packageName = foregroundAppPackage, dndStartTime = dndStart, dndEndTime = dndEnd)
+                        currentOverlay?.showOverlay()
                     }else{
                         val upcomingDND = TimeFormatUtility().upcomingDNDDelay(timeToCheckStr = timeToCheck, startTimeStr = dndStart)
                         if (upcomingDND <= 60){
-                            overlayProvider.buildOverlayUI(packageName = foregroundAppPackage, dndStartTime = dndStart, dndEndTime = dndEnd)
-                                ?.delayedOverlayTask(delayInMin = upcomingDND, isUserInitiatedDelay = false)
+                            currentOverlay = overlayProvider.buildOverlayUI(packageName = foregroundAppPackage, dndStartTime = dndStart, dndEndTime = dndEnd)
+                            currentOverlay?.delayedOverlayTask(delayInMin = upcomingDND, isUserInitiatedDelay = false)
                         }
                     }
                     return foregroundAppPackage
@@ -61,10 +64,11 @@ class OverlayManager(val applicationContext: Context) {
                 Logger.d(TAG, "threshold time  $savedTimeLimit + delay $userInitiatedDelay vs app usage time  ${currentAppAndUsageTimeInMin?.usageTime}")
                 currentAppAndUsageTimeInMin?.let {
                     if (it.usageTime >= (savedTimeLimit + userInitiatedDelay)){
-                        overlayProvider.buildOverlayUI(it, savedTimeLimit, withDelayInMin = userInitiatedDelay)?.showOverlay()
+                        currentOverlay = overlayProvider.buildOverlayUI(it, savedTimeLimit, withDelayInMin = userInitiatedDelay)
+                        currentOverlay?.showOverlay()
                     }else{
-                        overlayProvider.buildOverlayUI(it, savedTimeLimit, withDelayInMin = userInitiatedDelay)
-                            ?.delayedOverlayTask(delayInMin = ((savedTimeLimit + userInitiatedDelay) - it.usageTime).toLong(),isUserInitiatedDelay = userInitiatedDelay > 0)
+                        currentOverlay = overlayProvider.buildOverlayUI(it, savedTimeLimit, withDelayInMin = userInitiatedDelay)
+                        currentOverlay?.delayedOverlayTask(delayInMin = ((savedTimeLimit + userInitiatedDelay) - it.usageTime).toLong(),isUserInitiatedDelay = userInitiatedDelay > 0)
                         //deferOverlay(delayInMin = ((savedTimeLimit + userInitiatedDelay) - it.usageTime).toLong(), currentAppAndUsageTimeInMin = it, savedTimeLimit = savedTimeLimit, isUserInitiatedDelay = userInitiatedDelay > 0)
                     }
                 }
@@ -75,28 +79,25 @@ class OverlayManager(val applicationContext: Context) {
         return lastForegroundPackage
     }
 
-    private fun deferOverlay(delayInMin: Long,
-                             currentAppAndUsageTimeInMin: AppDataFromSystem,
-                             savedTimeLimit: Short,
-                             isUserInitiatedDelay: Boolean = false){
-        if (this::foregroundTimeMonitorScope.isInitialized.not()){
-            foregroundTimeMonitorScope = CoroutineScope(Dispatchers.Default)
-        }
-        foregroundTimeMonitorScope.launch {
-            Logger.d(TAG, "launched delayed task with delay of $delayInMin")
-            delay((delayInMin*60*1000))
-            Logger.d(TAG, "Delay over, will proceed for overlay")
-            if (isUserInitiatedDelay)
-                overlayProvider.buildOverlayUI(currentAppAndUsageTimeInMin = currentAppAndUsageTimeInMin, savedTimeLimit = savedTimeLimit, withDelayInMin = delayInMin.toShort(), )?.showOverlay()
-            else
-                overlayProvider.buildOverlayUI(currentAppAndUsageTimeInMin = currentAppAndUsageTimeInMin, savedTimeLimit = savedTimeLimit)?.showOverlay()
-        }
-    }
+//    private fun deferOverlay(delayInMin: Long,
+//                             currentAppAndUsageTimeInMin: AppDataFromSystem,
+//                             savedTimeLimit: Short,
+//                             isUserInitiatedDelay: Boolean = false){
+//        if (this::foregroundTimeMonitorScope.isInitialized.not()){
+//            foregroundTimeMonitorScope = CoroutineScope(Dispatchers.Default)
+//        }
+//        foregroundTimeMonitorScope.launch {
+//            Logger.d(TAG, "launched delayed task with delay of $delayInMin")
+//            delay((delayInMin*60*1000))
+//            Logger.d(TAG, "Delay over, will proceed for overlay")
+//            if (isUserInitiatedDelay)
+//                overlayProvider.buildOverlayUI(currentAppAndUsageTimeInMin = currentAppAndUsageTimeInMin, savedTimeLimit = savedTimeLimit, withDelayInMin = delayInMin.toShort(), )?.showOverlay()
+//            else
+//                overlayProvider.buildOverlayUI(currentAppAndUsageTimeInMin = currentAppAndUsageTimeInMin, savedTimeLimit = savedTimeLimit)?.showOverlay()
+//        }
+//    }
 
     private fun terminateForegroundTimeMonitor(){
-        if (this::foregroundTimeMonitorScope.isInitialized){
-            Logger.d(TAG, "canceling foregroundTimeMonitor scope")
-            foregroundTimeMonitorScope.cancel()
-        }
+        currentOverlay?.terminateForegroundMonitorScope()
     }
 }

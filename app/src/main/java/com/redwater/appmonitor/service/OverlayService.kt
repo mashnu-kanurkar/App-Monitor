@@ -98,7 +98,7 @@ class OverlayService : Service() {
     }
 
     private fun onAppOnBackground(backgroundAppPackage: String){
-        Logger.d(TAG, "updating last background app")
+        Logger.d(TAG, "updating last background app: $backgroundAppPackage")
         lastBackgroundPackage = backgroundAppPackage
     }
 

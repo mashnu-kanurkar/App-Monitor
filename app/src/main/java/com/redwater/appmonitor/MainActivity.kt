@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.google.firebase.messaging.FirebaseMessagingService
 import com.ironsource.mediationsdk.IronSource
 import com.ironsource.mediationsdk.integration.IntegrationHelper
 import com.redwater.appmonitor.advertising.ADManager
@@ -22,6 +23,7 @@ import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.data.repository.BlogRepository
 import com.redwater.appmonitor.data.repository.QuotesRepository
 import com.redwater.appmonitor.logger.Logger
+import com.redwater.appmonitor.service.RemoteMessagingService
 import com.redwater.appmonitor.service.ServiceManager
 import com.redwater.appmonitor.ui.MainApp
 import com.redwater.appmonitor.ui.theme.AppMonitorTheme
@@ -47,6 +49,8 @@ class MainActivity : ComponentActivity(){
         installSplashScreen()
         super.onCreate(savedInstanceState)
         Logger.d(TAG, "onCreate")
+        val token = RemoteMessagingService().getToken(applicationContext)
+        Logger.d(TAG, "token $token")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
             splashScreen.setOnExitAnimationListener {splashScreenView ->
@@ -127,7 +131,6 @@ class MainActivity : ComponentActivity(){
         ).build()
         WorkManager.getInstance(this.applicationContext)
             .enqueueUniquePeriodicWork(Constants.firebaseSyncPeriodicWorkerTag, ExistingPeriodicWorkPolicy.KEEP, periodWork)
-
 
     }
 

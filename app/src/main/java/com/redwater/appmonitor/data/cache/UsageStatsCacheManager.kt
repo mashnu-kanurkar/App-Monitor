@@ -31,7 +31,7 @@ class UsageStatsCacheManager private constructor() : ICacheManager<HashMap<Strin
 
              } catch (e: Exception){
                  e.printStackTrace()
-                 Logger.e(TAG, "Unable to cache data." )
+                 Logger.e(TAG, "Unable to cache data." , e)
              }
          }
     }

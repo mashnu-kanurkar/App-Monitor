@@ -14,6 +14,7 @@ import com.redwater.appmonitor.data.model.createDNDKey
 import com.redwater.appmonitor.data.model.toAppModel
 import com.redwater.appmonitor.data.model.toDNDMap
 import com.redwater.appmonitor.data.model.toFormattedString
+import com.redwater.appmonitor.data.model.updateDNDKey
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.logger.Logger
 import kotlinx.coroutines.flow.collectLatest
@@ -48,7 +49,6 @@ class DNDViewModel(private val usageStatsRepository: AppUsageStatsRepository): V
                         unSelectedAppsMap.remove(it.name)
                     }else{
                         unSelectedAppsMap.put(it.packageName, it.toAppModel().copy(icon = allApps.get(it.packageName)?.icon))
-
                     }
                 }
                 if (unSelectedAppsList.isEmpty().not()){
@@ -57,6 +57,7 @@ class DNDViewModel(private val usageStatsRepository: AppUsageStatsRepository): V
                 unSelectedAppsList.addAll(unSelectedAppsMap.values)
                 unSelectedAppsList.sortWith(compareBy { it.packageName })
                 if (dndEnabledApps.isEmpty()){
+                    dndMap.clear()
                     val temporaryKey = createDNDKey(startTime = TimeModel(hour = 10, minute = 30, period = Period.PM),
                         endTime = TimeModel(hour = 6, minute = 30, period = Period.AM)
                     )
@@ -103,7 +104,12 @@ class DNDViewModel(private val usageStatsRepository: AppUsageStatsRepository): V
         }
         viewModelScope.launch {
             dndMap.remove(oldDNDKey)
-            usageStatsRepository.insertPrefsFor(updatedList)
+            if (updatedList.isEmpty()){
+                dndMap.put(updateDNDKey(oldKey = oldDNDKey, timeModel = updatedTimeModel, dndTimeType = dndTimeType), mutableMapOf())
+            }else{
+                usageStatsRepository.insertPrefsFor(updatedList)
+            }
+
         }
     }
 

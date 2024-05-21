@@ -1,6 +1,8 @@
 package com.redwater.appmonitor
 
 object Constants {
+
+
     const val appDatabase = "app_database"
     const val appPrefsTable = "app_prefs"
     const val overlayDataTable = "overlay_data"
@@ -53,4 +55,23 @@ object Constants {
     const val defMeme = ""
     const val defQuote = "Change might not be fast and it isn\'t always easy. But with time and effort, almost any habit can be reshaped. \$Author-Charles Duhigg"
     const val privacyPolicyURL = "https://www.freeprivacypolicy.com/live/53699ba9-d108-4b57-a71b-21961c539fe1"
+
+    //push notifications
+    const val CHANNEL_ID = "1000"
+    const val FCM_FALLBACK_NOTIFICATION_CHANNEL_ID = "fcm_fallback_notification_channel"
+    const val FCM_FALLBACK_NOTIFICATION_CHANNEL_NAME = "Misc"
+
+    const val PRIORITY_DEFAULT = 0
+    const val PRIORITY_MAX = 2
+    const val EMPTY_NOTIFICATION_ID = -1000
+
+
+    const val NOTIF_PRIORITY = "n_pr"
+    const val NOTIF_MSG = "n_m"
+    const val NOTIF_TITLE = "n_t"
+    const val NOTIF_CHANNEL = "n_ch"
+    const val BIG_PICTURE = "n_bp"
+    const val BG_COLOR = "bg_c"
+    const val DEEPLINK = "n_dl"
+
 }
