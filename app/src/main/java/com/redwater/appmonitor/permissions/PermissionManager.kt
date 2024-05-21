@@ -1,7 +1,6 @@
 package com.redwater.appmonitor.permissions
 
 import android.Manifest
-import android.app.Activity
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
@@ -14,7 +13,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
-import com.patrykandpatrick.vico.compose.state.mutableSharedStateOf
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.ui.NotificationPermission
 import com.redwater.appmonitor.ui.OverlayPermission

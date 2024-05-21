@@ -12,14 +12,3 @@ fun List<AppModel>.toAppTimeMap(): Map<String, AppModel>{
     }
     return map
 }
-
-fun setPackageNameFromResolveInfoList(context: Context, launchIntent: Intent) {
-    val resolveInfoList = context.packageManager.queryIntentActivities(launchIntent, 0)
-    val appPackageName = context.packageName
-    for (resolveInfo in resolveInfoList) {
-        if (appPackageName == resolveInfo.activityInfo.packageName) {
-            launchIntent.setPackage(appPackageName)
-            break
-        }
-    }
-}

@@ -30,8 +30,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.viewmodel.PermissionViewModel
 import com.redwater.appmonitor.R
