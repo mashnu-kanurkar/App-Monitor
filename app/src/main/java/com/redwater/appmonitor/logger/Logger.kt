@@ -1,7 +1,6 @@
 package com.redwater.appmonitor.logger
 
 import android.util.Log
-import java.lang.Exception
 
 object Logger {
 

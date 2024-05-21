@@ -5,9 +5,7 @@ import com.redwater.appmonitor.data.AppDatabase
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.data.repository.BlogRepository
 import com.redwater.appmonitor.data.repository.QuotesRepository
-import com.redwater.appmonitor.logger.LogLevel
 import com.redwater.appmonitor.logger.Logger
-import com.redwater.appmonitor.service.RemoteMessagingService
 import io.grpc.android.BuildConfig
 
 class AppMonitorApp: Application() {

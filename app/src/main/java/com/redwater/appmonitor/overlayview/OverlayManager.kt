@@ -1,23 +1,17 @@
 package com.redwater.appmonitor.overlayview
 
 import android.content.Context
-import com.redwater.appmonitor.data.model.AppDataFromSystem
 import com.redwater.appmonitor.data.model.AppModel
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.utils.TimeFormatUtility
 import com.redwater.appmonitor.utils.toAppTimeMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class OverlayManager(val applicationContext: Context) {
     private val TAG = this::class.simpleName
-    private lateinit var foregroundTimeMonitorScope: CoroutineScope
     private val overlayProvider: OverlayProvider = OverlayProvider(applicationContext)
     private var currentOverlay: IOverlayHandler? = null
     private var lastForegroundPackage = ""

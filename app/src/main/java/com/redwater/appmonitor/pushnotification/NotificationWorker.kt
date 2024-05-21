@@ -6,7 +6,7 @@ import androidx.work.WorkerParameters
 import com.redwater.appmonitor.logger.Logger
 
 class NotificationWorker(private val context: Context,
-                         private val workerParameters: WorkerParameters):
+                         workerParameters: WorkerParameters):
     CoroutineWorker(context, workerParameters) {
         private val TAG = this::class.simpleName
     override suspend fun doWork(): Result {

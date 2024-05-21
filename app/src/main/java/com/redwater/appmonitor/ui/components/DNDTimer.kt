@@ -270,7 +270,7 @@ fun DNDAppContainer(appModelList: List<AppModel>,
 }
 
 @Composable
-fun ColumnScope.AppListContainer(title: String,
+fun AppListContainer(title: String,
                      instruction: String,
                      height: Dp = 720.dp,
                      appModelList: List<AppModel>,

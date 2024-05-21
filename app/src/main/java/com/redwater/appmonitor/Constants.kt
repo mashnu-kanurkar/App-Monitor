@@ -46,7 +46,6 @@ object Constants {
     }
     const val foregroundAppWorkerTag = "ForegroundAppWorker"
     const val foregroundAppWorkerPeriodInMin = 60L //min
-    const val firebaseSyncOneTimeWorkerTag = "FirebaseSyncOneTimeWorker"
     const val firebaseSyncPeriodicWorkerTag = "FirebaseSyncPeriodicWorker"
     const val firebaseSyncWorkerPeriodInDays = 4L //days
 
@@ -61,10 +60,7 @@ object Constants {
     const val FCM_FALLBACK_NOTIFICATION_CHANNEL_ID = "fcm_fallback_notification_channel"
     const val FCM_FALLBACK_NOTIFICATION_CHANNEL_NAME = "Misc"
 
-    const val PRIORITY_DEFAULT = 0
     const val PRIORITY_MAX = 2
-    const val EMPTY_NOTIFICATION_ID = -1000
-
 
     const val NOTIF_PRIORITY = "n_pr"
     const val NOTIF_MSG = "n_m"
