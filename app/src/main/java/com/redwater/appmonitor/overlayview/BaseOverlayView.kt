@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.AttributeSet
-import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -45,7 +44,7 @@ abstract class BaseOverlayView(context: Context,
             //application context can not be cast to activity
             val banner = IronSource.createBanner(context.applicationContext as Activity?, bannerSize)
             adLayout.addView(banner)
-            ADManager.getInstance(context).setBannerLayout(banner, BannerPlacement.OverlayBanner())
+            //ADManager.getInstance(context).createAndLoadBanner(banner, BannerPlacement.OverlayBanner())
         }catch (e: Exception){
             e.printStackTrace()
         }

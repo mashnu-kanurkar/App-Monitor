@@ -1,5 +1,6 @@
 package com.redwater.appmonitor.ui.screens
 
+import android.app.Activity
 import android.content.Context
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -34,6 +35,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.ironsource.mediationsdk.IronSource
 import com.redwater.appmonitor.R
+import com.redwater.appmonitor.advertising.ADManager
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.ui.PermissionType
 import com.redwater.appmonitor.ui.components.ErrorDescriptor
@@ -48,6 +50,7 @@ import com.redwater.appmonitor.viewmodel.MainViewModel
 fun HomeScreen(modifier: Modifier = Modifier,
                lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
                mainViewModel: MainViewModel,
+               adManager: ADManager?,
                context: Context = LocalContext.current,
                onNavigateNext: (packageName: String)-> Unit,
                onNavigateToPermissionScreen: ()-> Unit
@@ -158,6 +161,7 @@ fun HomeScreen(modifier: Modifier = Modifier,
                             }
                         ) { cardIndex ->
                             mainViewModel.onAppUnSelected(index = cardIndex)
+                            adManager?.showInterstitialAd(context as Activity)
                         }
                     }
                     itemsIndexed(uiStateUnselected){ index, appInfo ->
@@ -231,10 +235,7 @@ fun HomeScreen(modifier: Modifier = Modifier,
                             index = showTimePopUpForApp!!,
                             durationModel = it,)
                         showTimePopUpForApp = null
-
-                        if (IronSource.isInterstitialReady()) IronSource.showInterstitial()
-
-
+                        adManager?.showInterstitialAd(context as Activity)
                     }) {
                     showTimePopUpForApp = null
                 }

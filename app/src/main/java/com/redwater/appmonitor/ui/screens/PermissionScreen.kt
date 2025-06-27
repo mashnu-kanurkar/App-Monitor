@@ -134,7 +134,6 @@ fun NotificationPermissionContent(onClickAllow: ()-> Unit) {
             Text(modifier = Modifier.padding(16.dp, 4.dp), text = stringResource(id = R.string.button_allow))
         }
     }
-
 }
 
 @Composable

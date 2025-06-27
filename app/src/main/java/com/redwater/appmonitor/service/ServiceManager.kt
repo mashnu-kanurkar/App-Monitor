@@ -1,5 +1,6 @@
 package com.redwater.appmonitor.service
 
+import android.app.ForegroundServiceTypeException
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -24,12 +25,9 @@ object ServiceManager {
         if (OverlayService.isRunning.value.not()) {
 
             val permissionManager = PermissionManager()
-            if (permissionManager.hasOverlayPermission(context) && permissionManager.hasNotificationPermission(
-                    context
-                )
-            ) {
+            if (permissionManager.hasOverlayPermission(context) && permissionManager.hasNotificationPermission(context)) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    ContextCompat.startForegroundService(context.applicationContext, intent)
+                    ContextCompat.startForegroundService(context.applicationContext, intent, )
                 } else {
                     context.startService(intent)
                 }
@@ -44,16 +42,6 @@ object ServiceManager {
                         foregroundAppWorkRequest
                     )
 
-//                val firebaseSyncWorkRequest = PeriodicWorkRequestBuilder<FirebaseSyncWorker>(
-//                    Constants.firebaseSyncWorkerPeriodInHour,
-//                    TimeUnit.MINUTES
-//                ).build()
-//                WorkManager.getInstance(context.applicationContext)
-//                    .enqueueUniquePeriodicWork(
-//                        Constants.firebaseSyncWorkerTag,
-//                        ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
-//                        firebaseSyncWorkRequest
-//                    )
             }
         }
     }

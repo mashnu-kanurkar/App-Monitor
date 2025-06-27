@@ -70,4 +70,8 @@ object Constants {
     const val BG_COLOR = "bg_c"
     const val DEEPLINK = "n_dl"
 
+    //levelplay
+    const val INTERSTITIAL_AD_UNIT_ID = "5543qzv6vfjqluic"
+    const val BANNER_AD_UNIT_ID = "5egmv6a1ly312vfl"
+
 }

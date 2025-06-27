@@ -1,10 +1,13 @@
 package com.redwater.appmonitor.service
 
 import android.content.Context
+import android.os.Bundle
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.clevertap.android.sdk.CleverTapAPI
+import com.clevertap.android.sdk.pushnotification.fcm.CTFcmMessageHandler
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.redwater.appmonitor.logger.Logger
@@ -15,24 +18,27 @@ class RemoteMessagingService : FirebaseMessagingService() {
     private val TAG = this::class.simpleName
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
+
         Logger.d(TAG, "Received firebase message From: ${remoteMessage.from}")
         // Check if message contains a data payload.
         if (remoteMessage.data.isNotEmpty()) {
             Logger.d(TAG, "Message data payload: ${remoteMessage.data}")
-            //FCMMessageHandler().createNotification(context = applicationContext, message = remoteMessage)
-
-            val workManager = WorkManager.getInstance(applicationContext)
-            val onetimePushNotificationWork = OneTimeWorkRequestBuilder<NotificationWorker>()
-                .setInputData(Data.Builder().putAll(remoteMessage.data as Map<String, Any>).build())
-                .build()
-            workManager.enqueueUniqueWork(System.currentTimeMillis().toString(),
-                ExistingWorkPolicy.REPLACE,
-                onetimePushNotificationWork )
-        }
-
-        // Check if message contains a notification payload.
-        remoteMessage.notification?.let {
-            Logger.d(TAG, "Message Notification Body: ${it.body}")
+            val extras = Bundle()
+            for ((key, value) in remoteMessage.data) {
+                extras.putString(key, value)
+            }
+            val info = CleverTapAPI.getNotificationInfo(extras)
+            if (info.fromCleverTap) {
+                CTFcmMessageHandler().createNotification(applicationContext, remoteMessage);
+            } else {
+                val workManager = WorkManager.getInstance(applicationContext)
+                val onetimePushNotificationWork = OneTimeWorkRequestBuilder<NotificationWorker>()
+                    .setInputData(Data.Builder().putAll(remoteMessage.data as Map<String, Any>).build())
+                    .build()
+                workManager.enqueueUniqueWork(System.currentTimeMillis().toString(),
+                    ExistingWorkPolicy.REPLACE,
+                    onetimePushNotificationWork )
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 package com.redwater.appmonitor.ui.screens
 
+import android.app.Activity
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,6 +54,7 @@ import com.patrykandpatrick.vico.compose.chart.scroll.rememberChartScrollSpec
 import com.patrykandpatrick.vico.core.entry.ChartEntryModel
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.scroll.InitialScroll
+import com.redwater.appmonitor.advertising.ADManager
 import com.redwater.appmonitor.data.model.hourlyDistributionInMillis
 import com.redwater.appmonitor.data.model.maxOrNull
 
@@ -62,6 +64,7 @@ fun AnalyticsScreen(
     lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
     analyticsViewModel: AnalyticsViewModel,
     packageName: String?,
+    adManager: ADManager?,
     context: Context = LocalContext.current
 ) {
 
@@ -134,6 +137,7 @@ fun AnalyticsScreen(
                                 packageName = packageName,
                                 isSelected = !uiState.appModel!!.isSelected,
                             )
+                            adManager?.showInterstitialAd(context as Activity)
                         }
                     )
                     CombinedStatsCard(modifier = Modifier.padding(4.dp, 8.dp), todayUsageInMin = usageTimeInMin, launchCount = uiState.appModel!!.session?.sessionList?.size?: 0, longestSessionTimeInSec = (uiState.appModel!!.session?.maxOrNull()?.sessionLength?:0)/1000, thresholdTimeInMin = uiState.appModel!!.thresholdTime)
@@ -219,7 +223,7 @@ fun AnalyticsScreen(
                             context = context.applicationContext,
                             packageName = packageName
                         )
-                        if (IronSource.isInterstitialReady()) IronSource.showInterstitial()
+                        adManager?.showInterstitialAd(context as Activity)
                     }) {
                     analyticsViewModel.onTimeSelection(isDismiss = true)
                 }

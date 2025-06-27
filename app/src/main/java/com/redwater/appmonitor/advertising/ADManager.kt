@@ -1,195 +1,164 @@
 package com.redwater.appmonitor.advertising
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
-import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import com.ironsource.adqualitysdk.sdk.BuildConfig
 import com.ironsource.adqualitysdk.sdk.ISAdQualityConfig
 import com.ironsource.adqualitysdk.sdk.ISAdQualityLogLevel
 import com.ironsource.adqualitysdk.sdk.IronSourceAdQuality
 import com.ironsource.mediationsdk.IronSource
-import com.ironsource.mediationsdk.IronSourceBannerLayout
-import com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo
-import com.ironsource.mediationsdk.logger.IronSourceError
-import com.ironsource.mediationsdk.sdk.LevelPlayBannerListener
-import com.ironsource.mediationsdk.sdk.LevelPlayInterstitialListener
+import com.redwater.appmonitor.BuildConfig
+import com.redwater.appmonitor.Constants
 import com.redwater.appmonitor.logger.Logger
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.unity3d.mediation.LevelPlay
+import com.unity3d.mediation.LevelPlayAdSize
+import com.unity3d.mediation.LevelPlayInitRequest
+import com.unity3d.mediation.banner.LevelPlayBannerAdView
+import com.unity3d.mediation.interstitial.LevelPlayInterstitialAd
 
-class ADManager private constructor(private val context: Context,): LevelPlayInterstitialListener, DefaultLifecycleObserver{
+class ADManager private constructor(private val context: Context): ActivityListener, DefaultLifecycleObserver{
 
     private val TAG = this::class.simpleName
-    private val IRONSOURCE_KEY = "1d5b3e885"
-    private lateinit var advertisingId: String
-    private lateinit var bannerLayout: IronSourceBannerLayout
-    private lateinit var interstitialCapper: Job
-    private var isCapperEnabled = false
-    private var currentBanner: BannerPlacement? = null
+    private var bannerParentLayout: FrameLayout? = null
+    private var bannerAd : LevelPlayBannerAdView? = null
+    private var mInterstitialAd: LevelPlayInterstitialAd? = null
+    private val appKey = BuildConfig.IRON_SOURCE_APP_KEY
+
+
     companion object{
         @SuppressLint("StaticFieldLeak")
         @Volatile
         private var instance: ADManager? = null
 
-        fun getInstance(context: Context): ADManager{
+        fun getInstance(context: Context): ADManager {
             Logger.d("ADManager", "ADManager instance requested")
-            return instance?: synchronized(this){
-                ADManager(context.applicationContext)
+            return instance ?: synchronized(this) {
+                val created = ADManager(context)
+                instance = created // <-- ADD THIS LINE
+                created
             }
         }
     }
-    fun initialiseIronSource(){
+
+    fun initialiseIronSource(bannerLayout: FrameLayout){
+        Logger.d(TAG, "initialiseIronSource $appKey")
+        bannerParentLayout = bannerLayout
+
+
         val adQualityConfigBuilder = ISAdQualityConfig.Builder()
-        adQualityConfigBuilder.setTestMode(true)
-        adQualityConfigBuilder.setLogLevel(ISAdQualityLogLevel.INFO)
+            .setTestMode(false)
+            .setLogLevel(ISAdQualityLogLevel.VERBOSE)
+
         val adQualityConfig = adQualityConfigBuilder.build()
-        IronSourceAdQuality.getInstance().initialize(context.applicationContext, IRONSOURCE_KEY, adQualityConfig)
-        advertisingId = IronSource.getAdvertiserId(context.applicationContext)
-        // we're using an advertisingId as the 'userId'
-        Logger.d(TAG, "AD ID $advertisingId")
+        IronSourceAdQuality.getInstance().initialize(context, appKey, adQualityConfig)
+
         if (BuildConfig.DEBUG){
             Logger.d(TAG, "Build config isDebug ${BuildConfig.DEBUG}")
             enableTestSuit(true)
+            LevelPlay.validateIntegration(context)
         }else{
             enableTestSuit(false)
         }
-        IronSource.setLevelPlayInterstitialListener(this)
-        IronSource.setUserId(advertisingId)
-        IronSource.init(context, IRONSOURCE_KEY){
-            Logger.d(TAG, "IronSource init completed")
-            Logger.d(TAG, "AD ID 2: $advertisingId")
-            //if (isTest) IronSource.launchTestSuite(context);
-
-        }
-        IronSource.loadInterstitial()
+        initLevelPlay()
     }
 
-    override fun onStart(owner: LifecycleOwner) {
-        Logger.d(TAG, "lifecycle owner onStart ${owner.lifecycle.currentState}, setting isCapperEnabled to true")
-        isCapperEnabled = true
-    }
+    private fun initLevelPlay() {
+        Logger.d(TAG, "initialising LevelPlay")
 
-    override fun onStop(owner: LifecycleOwner) {
-        Logger.d(TAG, "lifecycle owner onStop ${owner.lifecycle.currentState}, setting isCapperEnabled to false")
-        isCapperEnabled = false
-        if (this::interstitialCapper.isInitialized){
-            interstitialCapper.cancel()
-        }
-    }
 
+        val legacyFormats = listOf(LevelPlay.AdFormat.INTERSTITIAL, LevelPlay.AdFormat.BANNER)
+        val initRequest = LevelPlayInitRequest.Builder(appKey)
+            .withLegacyAdFormats(legacyFormats)
+            .build()
+        LevelPlay.init(context, initRequest, InitializationListener(this))
+        Logger.d(TAG, "LevelPlay initialisation complete")
+    }
 
 
     private fun enableTestSuit(enable: Boolean = false){
         if (enable){
-            IronSource.setMetaData("is_test_suite", "enable")
+            LevelPlay.setMetaData("is_test_suite", "enable")
         }
     }
 
-    fun setBannerLayout(ironSourceBannerLayout: IronSourceBannerLayout, placement: BannerPlacement){
-        if (currentBanner == null){
-            Logger.d(TAG, "Current banner: $currentBanner vs placement requested: $placement")
-            currentBanner = placement
-            bannerLayout = ironSourceBannerLayout
-            currentBanner?.let{
-                loadNewBanner(it)
-            }
-        }else{
-            if (currentBanner != placement){
-                Logger.d(TAG, "Current banner: $currentBanner vs placement requested: $placement")
-                bannerLayout = ironSourceBannerLayout
-                currentBanner?.let {
-                    loadNewBanner(it)
-                }
+    override fun loadInterstitial() {
+        mInterstitialAd?.loadAd()
+    }
+
+    override fun loadBanner() {
+        bannerAd?.loadAd()
+    }
+
+    fun showInterstitialAd(activity: Activity) {
+        Logger.d(TAG, "Showing interstitial")
+        mInterstitialAd?.let {
+            if (it.isAdReady()){
+                it.showAd(activity)
             }
         }
-
     }
 
-    private fun loadNewBanner(placement: BannerPlacement){
-        Logger.d(TAG, "Loading new banner")
-        bannerLayout.levelPlayBannerListener = object : LevelPlayBannerListener {
-            override fun onAdLoaded(p0: AdInfo?) {
-                Logger.d(TAG, "Banner onAdLoaded")
-                bannerLayout.visibility = View.VISIBLE
-            }
+    override fun onStart(owner: LifecycleOwner) {
+        Logger.d(TAG, "lifecycle owner onStart ${owner.lifecycle.currentState}, setting isCapperEnabled to true")
+        bannerAd?.loadAd()
+    }
 
-            override fun onAdLoadFailed(p0: IronSourceError?) {
-                Logger.d(TAG, "Banner onAdLoadFailed")
-            }
+    override fun onStop(owner: LifecycleOwner) {
+        Logger.d(TAG, "lifecycle owner onStop ${owner.lifecycle.currentState}, setting isCapperEnabled to false")
+        bannerAd?.destroy()
+    }
 
-            override fun onAdClicked(p0: AdInfo?) {
-                Logger.d(TAG, "Banner onAdClicked")
-            }
+    override fun setBannerViewVisibility(visibility: Int) {
+        bannerParentLayout?.visibility = visibility
+    }
 
-            override fun onAdLeftApplication(p0: AdInfo?) {
-                Logger.d(TAG, "Banner onAdLeftApplication")
-            }
+    override fun createInterstitialAd() {
+        mInterstitialAd = LevelPlayInterstitialAd(Constants.INTERSTITIAL_AD_UNIT_ID)
+        mInterstitialAd?.setListener(InterstitialAdListener(this))
+        loadInterstitial()
+    }
 
-            override fun onAdScreenPresented(p0: AdInfo?) {
-                Logger.d(TAG, "Banner onAdScreenPresented")
-            }
+    override fun createBannerAd() {
+        // choose banner size
+        // 1. recommended - Adaptive ad size that adjusts to the screen width
+        val adSize = LevelPlayAdSize.createAdaptiveAdSize(context)
 
-            override fun onAdScreenDismissed(p0: AdInfo?) {
-                Logger.d(TAG, "Banner onAdScreenDismissed")
-            }
+        // 2. Adaptive ad size using fixed width ad size
+        //  val  adSize = LevelPlayAdSize.createAdaptiveAdSize(this, 400)
 
+        // 3. Specific banner size - BANNER, LARGE, MEDIUM_RECTANGLE
+        // val adSize = LevelPlayAdSize.BANNER
+
+        // Create the banner view and set the ad unit id and ad size
+        adSize?.let {
+            val config = LevelPlayBannerAdView.Config.Builder().setAdSize(it).build()
+            bannerAd = LevelPlayBannerAdView(context, Constants.BANNER_AD_UNIT_ID, config)
+
+            // set the banner listener
+            bannerAd?.setBannerListener(BannerAdListener(this))
+
+            // add LevelPlayBannerAdView to your container
+            val layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            bannerParentLayout?.addView(bannerAd, 0, layoutParams)
+
+        }?: run {
+            Logger.d(TAG, "Failed to create banner ad")
         }
-        Logger.d(TAG, "Banner initialised inner: ${this::bannerLayout.isInitialized}")
-        Logger.d("banner", "will try to load banner")
-        IronSource.loadBanner(bannerLayout, placement.name)
+        loadBanner()
     }
 
-    override fun onAdReady(p0: AdInfo?) {
-        Logger.d(TAG, "Interstitial onAdReady")
-    }
+    override fun launchTestSuit() {
+        Logger.d(TAG, "Launch test suit: ${BuildConfig.DEBUG}")
+        if (BuildConfig.DEBUG){
 
-    override fun onAdLoadFailed(p0: IronSourceError?) {
-        Logger.d(TAG, "Interstitial onAdLoadFailed")
-        IronSource.loadInterstitial()
-    }
-
-    override fun onAdOpened(p0: AdInfo?) {
-        Logger.d(TAG, "Interstitial onAdOpened")
-    }
-
-    override fun onAdShowSucceeded(p0: AdInfo?) {
-        Logger.d(TAG, "Interstitial onAdShowSucceeded")
-    }
-
-    override fun onAdShowFailed(p0: IronSourceError?, p1: AdInfo?) {
-        Logger.d(TAG, "Interstitial onAdShowFailed")
-        IronSource.loadInterstitial()
-    }
-
-    override fun onAdClicked(p0: AdInfo?) {
-        Logger.d(TAG, "Interstitial onAdClicked")
-    }
-
-    override fun onAdClosed(p0: AdInfo?) {
-        Logger.d(TAG, "Interstitial onAdClosed")
-        delayNextInterstitial()
-    }
-
-    private fun delayNextInterstitial(timeInMin: Int = 3){
-        if (isCapperEnabled){
-            Logger.d(TAG, "isCapperEnabled $isCapperEnabled, delaying next interstitial")
-            interstitialCapper = CoroutineScope(Dispatchers.Default).launch {
-                delay((timeInMin*60*1000).toLong())
-                IronSource.loadInterstitial()
-            }
-        }else{
-            Logger.d(TAG, "isCapperEnabled $isCapperEnabled, will try to cancel interstitialCapper")
-            if (this::interstitialCapper.isInitialized){
-                Logger.d(TAG, "isCapperEnabled $isCapperEnabled, will try to cancel interstitialCapper")
-                interstitialCapper.cancel()
-            }else{
-                Logger.d(TAG, "isCapperEnabled $isCapperEnabled, interstitialCapper not initialised")
-            }
+            LevelPlay.launchTestSuite(context)
         }
     }
 

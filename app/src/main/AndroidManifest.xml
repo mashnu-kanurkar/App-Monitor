@@ -9,6 +9,8 @@
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
@@ -34,11 +36,17 @@
         <service
             android:name=".service.RemoteMessagingService"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true"
+            android:permission="remote">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <receiver
+            android:name="com.clevertap.android.sdk.pushnotification.CTPushNotificationReceiver"
+            android:exported="false"
+            android:enabled="true">
+        </receiver>
 
         <activity
             android:name=".MainActivity"
@@ -55,8 +63,12 @@
 
         <service
             android:name=".service.OverlayService"
+            android:foregroundServiceType="specialUse"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="To listen UsageStatsManager events to identify the current launched package and total usage time"/>
+        </service>
 
         <receiver
             android:name=".service.receiver.BootCompleteReceiver"
@@ -67,28 +79,39 @@
         </receiver>
 
         <meta-data
+            android:name="CLEVERTAP_ACCOUNT_ID"
+            android:value="RKR-99K-R46Z"/>
+        <meta-data
+            android:name="CLEVERTAP_TOKEN"
+            android:value="3cc-232"/>
+        <!-- IMPORTANT: To force use Google AD ID to uniquely identify  users, use the following meta tag. GDPR mandates that if you are using this tag, there is prominent disclousure to your end customer in their application. Read more about GDPR here - https://clevertap.com/blog/in-preparation-of-gdpr-compliance/ -->
+        <meta-data
+            android:name="CLEVERTAP_USE_GOOGLE_AD_ID"
+            android:value="0"/>
+
+        <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" /> <!-- AD network activities -->
         <activity
             android:name="com.ironsource.sdk.controller.ControllerActivity"
             android:configChanges="orientation|screenSize"
-            android:hardwareAccelerated="true" />
+            android:hardwareAccelerated="true"
+            android:theme="@android:style/Theme.NoTitleBar" />
         <activity
             android:name="com.ironsource.sdk.controller.InterstitialActivity"
             android:configChanges="orientation|screenSize"
             android:hardwareAccelerated="true"
-            android:theme="@android:style/Theme.Translucent" />
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <activity
             android:name="com.ironsource.sdk.controller.OpenUrlActivity"
             android:configChanges="orientation|screenSize"
             android:hardwareAccelerated="true"
-            android:theme="@android:style/Theme.Translucent" />
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <activity
             android:name="com.ironsource.mediationsdk.testSuite.TestSuiteActivity"
             android:configChanges="orientation|screenSize"
             android:hardwareAccelerated="true"
             android:theme="@android:style/Theme.NoTitleBar" />
-
         <provider
             android:name="com.ironsource.lifecycle.IronsourceLifecycleProvider"
             android:authorities="${applicationId}.IronsourceLifecycleProvider" />

@@ -1,6 +1,7 @@
 package com.redwater.appmonitor
 
 import android.animation.ObjectAnimator
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -14,9 +15,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.clevertap.android.sdk.CleverTapAPI
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.ironsource.mediationsdk.IronSource
 import com.ironsource.mediationsdk.integration.IntegrationHelper
 import com.redwater.appmonitor.advertising.ADManager
+import com.redwater.appmonitor.crm.clevertap.CleverTapUtil
 import com.redwater.appmonitor.data.UserPreferences
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.data.repository.BlogRepository
@@ -43,6 +47,17 @@ class MainActivity : ComponentActivity(){
     private var isPrivacyPolicyAccepted: Int = -1
     private lateinit var privacyPolicyAcceptFlowCollector: Job
     private lateinit var appPrefsMonitorCollector: Job
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+
+        // On Android 12, Raise notification clicked event when Activity is already running in activity backstack
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            CleverTapUtil.pushNotificationClickedEvent(intent!!.extras)
+        }
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Handle the splash screen transition.
         installSplashScreen()
@@ -100,8 +115,7 @@ class MainActivity : ComponentActivity(){
                         onboardingPrefsCollector.cancel()
                         privacyPolicyAcceptFlowCollector.cancel()
                         content.viewTreeObserver.removeOnPreDrawListener(this)
-                        val adManager = ADManager.getInstance(applicationContext)
-                        adManager.initialiseIronSource()
+                        val adManager = ADManager.getInstance(this@MainActivity)
                         lifecycle.addObserver(adManager)
                         setContent {
                             AppMonitorTheme {
@@ -111,6 +125,7 @@ class MainActivity : ComponentActivity(){
                                         blogRepository = blogRepository,
                                         onBoardingRequired = isOnBoardingCompleted,
                                         isPrivacyPolicyAccepted = isPrivacyPolicyAccepted,
+                                        adManager = adManager,
                                         context = this@MainActivity
                                     )
                             }
@@ -131,6 +146,13 @@ class MainActivity : ComponentActivity(){
         WorkManager.getInstance(this.applicationContext)
             .enqueueUniquePeriodicWork(Constants.firebaseSyncPeriodicWorkerTag, ExistingPeriodicWorkPolicy.KEEP, periodWork)
 
+        val defaultInstance = CleverTapAPI.getDefaultInstance(applicationContext)
+        defaultInstance?.let { ins ->
+            Logger.i(TAG, "setting object id to firebase : ${ins.cleverTapID}")
+            FirebaseAnalytics.getInstance(this).setUserProperty("ct_objectId", ins.cleverTapID)
+        } ?: run {
+            Logger.e(TAG, "Uninstall tracking not setup cause of non initialised instance")
+        }
     }
 
     private fun monitorService(){

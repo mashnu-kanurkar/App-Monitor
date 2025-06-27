@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.redwater.appmonitor.crm.clevertap.CleverTapUtil
 import com.redwater.appmonitor.data.UserPreferences
 import com.redwater.appmonitor.logger.Logger
 import com.redwater.appmonitor.permissions.PermissionManager
@@ -24,9 +25,12 @@ class PermissionViewModel: ViewModel() {
     private var flowRegistered = false
     fun onNotificationPermissionChanged(isGranted: Boolean, context: Context){
         Logger.d(TAG, "permission changed: $isGranted")
-        if (flowRegistered.not()){
-            //registerStateFlow(context = context)
+        if (isGranted){
+            CleverTapUtil.createNotificationChannel(context)
         }
+//        if (flowRegistered.not()){
+//            //registerStateFlow(context = context)
+//        }
     }
     fun onPermissionClick(type: Int, isPositive: Boolean, context: Context){
         if (flowRegistered.not()){

@@ -1,14 +1,15 @@
 package com.redwater.appmonitor
 
 import android.app.Application
+import com.clevertap.android.sdk.ActivityLifecycleCallback
 import com.redwater.appmonitor.data.AppDatabase
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.data.repository.BlogRepository
 import com.redwater.appmonitor.data.repository.QuotesRepository
 import com.redwater.appmonitor.logger.Logger
-import io.grpc.android.BuildConfig
+import com.redwater.appmonitor.logger.LogLevel
 
-class AppMonitorApp: Application() {
+class AppMonitorApp: Application(){
 
     private val TAG = this::class.simpleName
 
@@ -19,10 +20,6 @@ class AppMonitorApp: Application() {
         AppUsageStatsRepository(database.getAppPrefsDao())
     }
 
-//    val overlayDataRepository by lazy {
-//        OverlayDataRepository(database.getOverlayDataDao())
-//    }
-
     val quotesRepository by lazy {
         QuotesRepository(database.quotesDao())
     }
@@ -32,17 +29,13 @@ class AppMonitorApp: Application() {
     }
 
     override fun onCreate() {
+        ActivityLifecycleCallback.register(this)
         super.onCreate()
-        Logger.d(TAG, "Debug Build : ${BuildConfig.DEBUG}")
-        //Logger.setLogLevel(LogLevel.OFF)
-
-//        if (BuildConfig.DEBUG){
-//            Logger.setLogLevel(LogLevel.DEBUG)
-//        }else{
-//            Logger.setLogLevel(LogLevel.OFF)
-//        }
-
-
+        if (BuildConfig.DEBUG) {
+            Logger.setLogLevel(LogLevel.VERBOSE)
+        }else{
+            Logger.setLogLevel(LogLevel.OFF)
+        }
 
     }
 

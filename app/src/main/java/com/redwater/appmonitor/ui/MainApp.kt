@@ -1,7 +1,7 @@
 package com.redwater.appmonitor.ui
 
-import android.app.Activity
 import android.content.Context
+import android.widget.FrameLayout
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,12 +42,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.ironsource.mediationsdk.ISBannerSize
-import com.ironsource.mediationsdk.IronSource
+import com.redwater.appmonitor.BuildConfig
 import com.redwater.appmonitor.Constants
 import com.redwater.appmonitor.R
 import com.redwater.appmonitor.advertising.ADManager
-import com.redwater.appmonitor.advertising.BannerPlacement
 import com.redwater.appmonitor.data.UserPreferences
 import com.redwater.appmonitor.data.repository.AppUsageStatsRepository
 import com.redwater.appmonitor.data.repository.BlogRepository
@@ -106,9 +104,9 @@ fun getTitle(route: String?): Int {
 fun AppMonitorAppBar(
     title: Int,
     canNavigateBack: Boolean,
+    adManager: ADManager?,
     navigateUp: () -> Unit,
     modifier: Modifier = Modifier,
-
 ) {
     var expanded by remember {
         mutableStateOf(false)
@@ -145,6 +143,15 @@ fun AppMonitorAppBar(
                         uriHandler.openUri(Constants.privacyPolicyURL)
                     }
                 )
+                if (BuildConfig.DEBUG){
+                    DropdownMenuItem(
+                        text = { Text("Ads test suit") },
+                        onClick = {
+                            adManager?.launchTestSuit()
+                        }
+                    )
+                }
+
             }
         }
     )
@@ -157,6 +164,7 @@ fun MainApp(appUsageStatsRepository: AppUsageStatsRepository,
             navController: NavHostController = rememberNavController(),
             onBoardingRequired: Int = 0,
             isPrivacyPolicyAccepted: Int = 0,
+            adManager: ADManager?,
             context: Context = LocalContext.current) {
 
     val TAG = "MainApp"
@@ -170,10 +178,14 @@ fun MainApp(appUsageStatsRepository: AppUsageStatsRepository,
     Logger.d(TAG, "privacy policy accepted: $isPrivacyPolicyAccepted")
     val startDestination = if (isPrivacyPolicyAccepted > 0) AppScreens.Dashboard.route else if (onBoardingRequired > 0) AppScreens.PrivacyPolicy.route else AppScreens.Permission.route
     //val startDestination = "test"
+    var adManagerInitialised by remember{
+        mutableStateOf(false)
+    }
     Scaffold(
         topBar = {
             AppMonitorAppBar(
                 title = currentScreenTitle,
+                adManager = adManager,
                 canNavigateBack = navController.previousBackStackEntry != null,
                 navigateUp = { navController.navigateUp() },
             )
@@ -185,12 +197,22 @@ fun MainApp(appUsageStatsRepository: AppUsageStatsRepository,
                     .fillMaxWidth()
                     .background(color = Color.Transparent),
                 factory = {
-                    IronSource.createBanner(context as Activity?, ISBannerSize.SMART)
+                    FrameLayout(context)
                 },
                 update = {
                     Logger.d(TAG, "Banner layout inflated")
-                    ADManager.getInstance(context.applicationContext).setBannerLayout(ironSourceBannerLayout = it, placement = BannerPlacement.HomeBanner())
+                    if (!adManagerInitialised){
+                        coroutineScope.launch {
+                            try {
+                                adManager?.initialiseIronSource(it)
+                                adManagerInitialised = true
+                            } catch (e: Exception){
+                                Logger.e(TAG, "Ad initialization failed: ${e.localizedMessage}")
+                            }
+                        }
+                    }
                 }
+
             )
         }
     ) { innerPadding ->
@@ -236,7 +258,9 @@ fun MainApp(appUsageStatsRepository: AppUsageStatsRepository,
             composable(route = AppScreens.HomeScreen.route){
                 val mainViewModel = viewModel<MainViewModel>(factory = ViewModelFactory(appUsageStatsRepository) )
                 HomeScreen(mainViewModel = mainViewModel,
-                    modifier = Modifier.fillMaxSize(), context = context,
+                    modifier = Modifier.fillMaxSize(),
+                    adManager = adManager,
+                    context = context,
                     onNavigateNext = {packageName: String ->
                         Logger.d(TAG, "Navigating with $packageName")
                         navController.navigate(AppScreens.Analytics.route.replace(oldValue = "{packageName}", newValue = packageName))
@@ -252,6 +276,7 @@ fun MainApp(appUsageStatsRepository: AppUsageStatsRepository,
                 val analyticsViewModel = viewModel<AnalyticsViewModel>(factory = ViewModelFactory(appUsageStatsRepository) )
                 AnalyticsScreen(analyticsViewModel = analyticsViewModel,
                     packageName = packageName, modifier = Modifier.fillMaxSize(),
+                    adManager = adManager,
                     context = context
                     )
             }
